@@ -2,11 +2,12 @@ from flask import Flask,jsonify,request, redirect, session
 from flask_restx import Api,Resource,fields
 from config import DevConfig
 from flask_cors import CORS
-from model import Items
+from model import Store
 from database import db
 from flask_migrate import Migrate
 from authlib.integrations.flask_client import OAuth
 from functools import wraps
+import sys
 
 
 
@@ -84,14 +85,47 @@ def require_scope(scope):
 
 
 
-items_model=api.model(
-    "Items",
+
+store_model = api.model(
+    "Store",
     {
-        "id":fields.Integer(),
-        "title":fields.String(),
-        "price":fields.Float()
+        "id": fields.Integer(),
+        "name": fields.String(),
+        "created_at": fields.DateTime(),
+        "updated_at": fields.DateTime(),
     }
 )
+
+@api.route('/api/stores')
+class StoresResource(Resource):
+
+    @api.marshal_with(store_model)
+    def post(self):
+        try:
+            data = request.get_json()
+            if 'name' not in data:
+                return {'error': 'Missing required field "name"'}, 400
+
+            # Create a new user and store
+
+            new_store = Store(name=data.get('name'))
+            db.session.add(new_store)
+            new_store.save()
+
+            # Commit the changes to the database
+            print(new_store,file=sys.stderr)
+            return new_store, 201
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in post method: {str(e)}")  # Print the error for debugging
+            return {'error': 'Internal server error'}, 500
+        
+    @api.marshal_list_with(store_model)
+    def get(self):
+        stores = Store.query.all()
+        return stores
+        
+
 @api.route('/api/login')
 class AuthLogin(Resource):
     def get(self):
@@ -104,24 +138,6 @@ class AuthCallback(Resource):
         session["user"] = token
            # Perform any additional user validation or database operations here
         return redirect('http://localhost:3000')
-
-@api.route('/api/items')
-class ItemsResource(Resource):
-
-    @api.marshal_list_with(items_model)
-    def get(self):
-        items=Items.query.all()
-        return items
-    
-    @api.marshal_with(items_model)
-    def post(self):
-        data=request.get_json()
-        new_items=Items(
-            title=data.get('title'),
-            price=data.get('price')
-        )
-        new_items.save()
-        return new_items,201
 
 @api.route('/api/admin')
 class AdminResource(Resource):

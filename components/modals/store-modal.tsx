@@ -12,6 +12,8 @@ import { Modal } from "../ui/modal"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
+import { useState } from "react"
+import axios from "axios"
 
 
 //zod is required from shadcn for forms
@@ -21,7 +23,7 @@ const formSchema = z.object({
 
 export const StoreModal = () => {
     const storeModal = useStoreModal()
-
+    const [loading,setLoading] = useState(false)
     //form here is used below in Form component of ShadCN
     const form = useForm<z.infer<typeof formSchema>>(
         {
@@ -33,7 +35,18 @@ export const StoreModal = () => {
     )
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-            console.log(values)
+            try {
+                setLoading(true)
+                console.log(values)
+                const response = await axios.post('/api/stores',values)
+
+                console.log(response.data)
+            }catch(e) {
+                console.log(e)
+
+            }finally {
+                setLoading(false)
+            }
             //CREATE STORE: TODO LATER
     }
 
@@ -54,15 +67,15 @@ export const StoreModal = () => {
                         Name
                     </FormLabel>
                     <FormControl>
-                        <Input placeholder="Ecommerce" {...field}/>
+                        <Input disabled={loading} placeholder="Ecommerce" {...field}/>
                     </FormControl>
                     <FormMessage/>   {/* This condition defined in form constant of zod above in formSchema*/}
                 </FormItem>
             )}
             />
         <div className='pt-6 space-x-2 flex items-center justify-end w-full'>
-                    <Button variant="outline" onClick={storeModal.onClose}>Cancel</Button>
-                    <Button type="submit">Continue</Button> 
+                    <Button variant="outline" disabled={loading} onClick={storeModal.onClose}>Cancel</Button>
+                    <Button disabled={loading} type="submit">Continue</Button> 
                     {/* call the obSubmit defined above*/}
 
         </div>
