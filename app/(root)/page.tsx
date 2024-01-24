@@ -1,19 +1,25 @@
-'use client'
-import { Button } from "@/components/ui/button";
-import { navigate } from "../actions";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+"use client"
 
-export default function Home() {
-    const { push } = useRouter();
-    const routing = () => {
-        push('/api/login')
-    }
+import { useEffect } from "react"
+
+import { useStoreModal } from "@/hooks/use-store-modal"
+
+const SetupPage = () => {
+  const onOpen = useStoreModal((state)=> state.onOpen)
+  const isOpen = useStoreModal((state)=> state.isOpen)
+
+useEffect(() =>{
+  if (!isOpen) {
+    onOpen()
+  }
+},[isOpen,onOpen])
 
   return (
- 
     <div className="p-4">
-        <Button onClick={routing}>Click me</Button>
+      Root Page
     </div>
   )
+
 }
+
+export default SetupPage
