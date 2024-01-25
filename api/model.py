@@ -23,3 +23,8 @@ class Store(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+class User(db.Model):
+    id = db.Column(db.String(100), primary_key=True)
+    name = db.Column(db.String(100))
+    picture = db.Column(db.String(500))

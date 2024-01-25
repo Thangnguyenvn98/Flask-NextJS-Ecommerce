@@ -14,6 +14,7 @@ import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { useState } from "react"
 import axios from "axios"
+import {toast} from "react-hot-toast"
 
 
 //zod is required from shadcn for forms
@@ -37,12 +38,12 @@ export const StoreModal = () => {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
             try {
                 setLoading(true)
-                console.log(values)
+                
                 const response = await axios.post('/api/stores',values)
 
-                console.log(response.data)
+                toast.success("Store created")
             }catch(e) {
-                console.log(e)
+                toast.error("Something went wrong")
 
             }finally {
                 setLoading(false)

@@ -2,10 +2,12 @@ from flask import Flask,jsonify,request, redirect, session
 from flask_restx import Api,Resource,fields
 from config import DevConfig
 from flask_cors import CORS
-from model import Store
+from model import Store, User
 from database import db
 from flask_migrate import Migrate
 from authlib.integrations.flask_client import OAuth
+from auth0.authentication import GetToken
+from auth0.management import Auth0
 from functools import wraps
 import sys
 
@@ -135,7 +137,15 @@ class AuthLogin(Resource):
 class AuthCallback(Resource):
     def get(self):
         token =auth0.authorize_access_token()
-        session["user"] = token
+        userinfo_url = f"https://{app.config['AUTH0_DOMAIN']}/userinfo"
+        user_info = auth0.get(userinfo_url)
+        user_info=user_info.json()
+        print(user_info,file=sys.stderr)
+        user=User.query.get(user_info['sub'])
+        if not user:
+            user = User(id=user_info['sub'], name=user_info['name'], picture=user_info['picture'])
+            db.session.add(user)
+            db.session.commit()
            # Perform any additional user validation or database operations here
         return redirect('http://localhost:3000')
 

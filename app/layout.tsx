@@ -1,5 +1,5 @@
 import { ModalProvider } from '@/providers/modal-provider'
-
+import { ToasterProvider } from '@/providers/toast-provider'
 
 import './globals.css'
 import { Inter } from 'next/font/google'
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-  
+        <ToasterProvider/>
         <ModalProvider/>
         {children}
         </body>
