@@ -19,13 +19,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <UserProvider>
       <body className={inter.className}>
-        <UserProvider>
         <ToasterProvider/>
         <ModalProvider/>
         {children}
-        </UserProvider>
         </body>
+      </UserProvider> 
     </html>
   )
 }

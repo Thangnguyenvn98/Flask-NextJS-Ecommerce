@@ -1,12 +1,12 @@
-"use client"
+'use client'
 
 import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver} from "@hookform/resolvers/zod"
 
 
-
 import { useStoreModal } from "@/hooks/use-store-modal"
+
 
 import { Modal } from "../ui/modal"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
@@ -15,6 +15,7 @@ import { Button } from "../ui/button"
 import { useState } from "react"
 import axios from "axios"
 import {toast} from "react-hot-toast"
+import { useUser } from "@auth0/nextjs-auth0/client"
 
 
 //zod is required from shadcn for forms
@@ -25,6 +26,9 @@ const formSchema = z.object({
 export const StoreModal = () => {
     const storeModal = useStoreModal()
     const [loading,setLoading] = useState(false)
+
+    const {user} = useUser()
+
     //form here is used below in Form component of ShadCN
     const form = useForm<z.infer<typeof formSchema>>(
         {
@@ -38,8 +42,8 @@ export const StoreModal = () => {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
             try {
                 setLoading(true)
-                
-                const response = await axios.post('/api/stores',values)
+                const data = {...values,'userId': user?.sid}
+                const response = await axios.post('/api/stores',data)
 
                 toast.success("Store created")
             }catch(e) {
