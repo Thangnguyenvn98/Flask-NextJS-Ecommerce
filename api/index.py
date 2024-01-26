@@ -20,70 +20,70 @@ CORS(app)
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
-oauth=OAuth(app)
+# oauth=OAuth(app)
 
-auth0 = oauth.register(
-       'auth0',
-       client_id=app.config['AUTH0_CLIENT_ID'],
-       client_secret=app.config['AUTH0_CLIENT_SECRET'],
-       client_kwargs= {
-           'scope': 'openid profile email'
-       },
-       server_metadata_url=f'https://{app.config["AUTH0_DOMAIN"]}/.well-known/openid-configuration'
+# auth0 = oauth.register(
+#        'auth0',
+#        client_id=app.config['AUTH0_CLIENT_ID'],
+#        client_secret=app.config['AUTH0_CLIENT_SECRET'],
+#        client_kwargs= {
+#            'scope': 'openid profile email'
+#        },
+#        server_metadata_url=f'https://{app.config["AUTH0_DOMAIN"]}/.well-known/openid-configuration'
 
-   )
+#    )
 
-class AuthError(Exception):
-    def __init__(self, error, status_code):
-        self.error = error
-        self.status_code = status_code
+# class AuthError(Exception):
+#     def __init__(self, error, status_code):
+#         self.error = error
+#         self.status_code = status_code
 
-def get_token_auth_header():
-       auth_header = request.headers.get('Authorization', None)
-       if not auth_header:
-           raise AuthError({
-               'code': 'authorization_header_missing',
-               'description': 'Authorization header is expected.'
-           }, 401)
-       parts = auth_header.split()
-       if parts[0].lower() != 'bearer':
-           raise AuthError({
-               'code': 'invalid_header',
-               'description': 'Authorization header must start with "Bearer".'
-           }, 401)
-       elif len(parts) == 1:
-           raise AuthError({
-               'code': 'invalid_header',
-               'description': 'Token not found.'
-           }, 401)
-       elif len(parts) > 2:
-           raise AuthError({
-               'code': 'invalid_header',
-               'description': 'Authorization header must be bearer token.'
-           }, 401)
-       return parts[1]
+# def get_token_auth_header():
+#        auth_header = request.headers.get('Authorization', None)
+#        if not auth_header:
+#            raise AuthError({
+#                'code': 'authorization_header_missing',
+#                'description': 'Authorization header is expected.'
+#            }, 401)
+#        parts = auth_header.split()
+#        if parts[0].lower() != 'bearer':
+#            raise AuthError({
+#                'code': 'invalid_header',
+#                'description': 'Authorization header must start with "Bearer".'
+#            }, 401)
+#        elif len(parts) == 1:
+#            raise AuthError({
+#                'code': 'invalid_header',
+#                'description': 'Token not found.'
+#            }, 401)
+#        elif len(parts) > 2:
+#            raise AuthError({
+#                'code': 'invalid_header',
+#                'description': 'Authorization header must be bearer token.'
+#            }, 401)
+#        return parts[1]
 
-def require_scope(scope):
-       def decorator(f):
-           @wraps(f)
-           def decorated(*args, **kwargs):
-               token = get_token_auth_header()
-               try:
-                   payload = auth0.parse_id_token(token)
-                   if scope in payload.get('scope', '').split():
-                       return f(*args, **kwargs)
-                   else:
-                       raise AuthError({
-                           'code': 'insufficient_scope',
-                           'description': 'Permission denied.'
-                       }, 403)
-               except Exception as e:
-                   raise AuthError({
-                       'code': 'invalid_token',
-                       'description': 'Token is invalid.'
-                   }, 401)
-           return decorated
-       return decorator
+# def require_scope(scope):
+#        def decorator(f):
+#            @wraps(f)
+#            def decorated(*args, **kwargs):
+#                token = get_token_auth_header()
+#                try:
+#                    payload = auth0.parse_id_token(token)
+#                    if scope in payload.get('scope', '').split():
+#                        return f(*args, **kwargs)
+#                    else:
+#                        raise AuthError({
+#                            'code': 'insufficient_scope',
+#                            'description': 'Permission denied.'
+#                        }, 403)
+#                except Exception as e:
+#                    raise AuthError({
+#                        'code': 'invalid_token',
+#                        'description': 'Token is invalid.'
+#                    }, 401)
+#            return decorated
+#        return decorator
 
 
 
@@ -95,6 +95,15 @@ store_model = api.model(
         "name": fields.String(),
         "created_at": fields.DateTime(),
         "updated_at": fields.DateTime(),
+    }
+)
+
+user_model = api.model(
+    "User",
+    {
+        "id":fields.String(),
+        "name":fields.String(),
+        "picture": fields.String(),
     }
 )
 
@@ -128,27 +137,23 @@ class StoresResource(Resource):
         return stores
         
 
-@api.route('/api/login')
-class AuthLogin(Resource):
-    def get(self):
-        return auth0.authorize_redirect(redirect_uri='http://localhost:8080/api/callback')
 
-@api.route('/api/callback')
-class AuthCallback(Resource):
-    def get(self):
-        token =auth0.authorize_access_token()
-        userinfo_url = f"https://{app.config['AUTH0_DOMAIN']}/userinfo"
-        user_info = auth0.get(userinfo_url)
-        user_info=user_info.json()
-        print(user_info,file=sys.stderr)
-        user=User.query.get(user_info['sub'])
-        if not user:
-            user = User(id=user_info['sub'], name=user_info['name'], picture=user_info['picture'])
-            db.session.add(user)
-            db.session.commit()
-           # Perform any additional user validation or database operations here
-        return redirect('http://localhost:3000')
-
+# @api.route('/api/user')
+# class UserResource(Resource):
+#     @require_scope('openid')
+#     def get(self):
+#         token = auth0.authorize_access_token()
+#         payload = auth0.parse_id_token(token)
+#         user_id = payload['sub']
+#         index = user_id.find("|")
+#         if index:
+#             user_id = user_id[index+1:]
+#         user = User.query.get(user_id)
+#         if user:
+#             return jsonify(user_id=user.id), 200
+#         else:
+#             return {'error':'User not found'}, 404
+    
 @api.route('/api/admin')
 class AdminResource(Resource):
     def get(self):

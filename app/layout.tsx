@@ -1,5 +1,6 @@
 import { ModalProvider } from '@/providers/modal-provider'
 import { ToasterProvider } from '@/providers/toast-provider'
+import { UserProvider} from '@auth0/nextjs-auth0/client'
 
 import './globals.css'
 import { Inter } from 'next/font/google'
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <UserProvider>
         <ToasterProvider/>
         <ModalProvider/>
         {children}
+        </UserProvider>
         </body>
     </html>
   )
