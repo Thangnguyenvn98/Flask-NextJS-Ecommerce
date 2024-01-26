@@ -145,6 +145,7 @@ store_model = api.model(
     {
         "id": fields.Integer(),
         "name": fields.String(),
+        "user_id": fields.String(),
         "created_at": fields.DateTime(),
         "updated_at": fields.DateTime(),
     }
@@ -192,8 +193,10 @@ class StoresResource(Resource):
     
 @api.route('/api/store/<string:user_id>')
 class StoreResource(Resource):
+
+    @api.marshal_with(store_model)
     def get(self,user_id):
-        store = Store.query.get(user_id)
+        store = Store.query.filter_by(user_id=user_id).first()
         return store
 
 
