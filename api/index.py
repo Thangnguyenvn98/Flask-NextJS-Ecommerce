@@ -171,13 +171,11 @@ class StoresResource(Resource):
                 return {'error': 'Missing required field "name"'}, 400
 
             # Create a new user and store
-            print(data,file=sys.stderr)
             new_store = Store(name=data.get('name'),user_id=data.get('userId'))
             db.session.add(new_store)
             new_store.save()
 
             # Commit the changes to the database
-            print(new_store,file=sys.stderr)
             return new_store, 201
         except Exception as e:
             db.session.rollback()
@@ -197,6 +195,8 @@ class StoreResource(Resource):
     @api.marshal_with(store_model)
     def get(self,user_id):
         store = Store.query.filter_by(user_id=user_id).first()
+        if not store:
+            return {'message': 'Store not found'}, 404
         return store
 
 

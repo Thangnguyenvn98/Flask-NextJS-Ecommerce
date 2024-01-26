@@ -19,7 +19,6 @@ useEffect(() =>{
 
         try {
           const response = await axios.post('/api/user', user);
-          console.log(response.data);
           // Set isUserDataSent to true after sending user data
           setIsDataSet(true);
         } catch (error) {
@@ -27,7 +26,9 @@ useEffect(() =>{
         }
       }
    } 
-   sendUserInfo()
+   if (!isDataSet) {
+    sendUserInfo();
+  }
    
   
   

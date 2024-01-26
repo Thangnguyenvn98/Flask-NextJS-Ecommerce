@@ -44,8 +44,10 @@ export const StoreModal = () => {
                 setLoading(true)
                 const data = {...values,'userId': user?.sid}
                 const response = await axios.post('/api/stores',data)
+                
 
-                toast.success("Store created")
+                //completely refreshed, make sure add it to the db
+                window.location.assign(`/${response.data.user_id}`)
             }catch(e) {
                 toast.error("Something went wrong")
 

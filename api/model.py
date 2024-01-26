@@ -12,7 +12,7 @@ class Store(db.Model):
     name = Column(String(50), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
     updated_at = Column(DateTime(timezone=True), onupdate=func.current_timestamp())
-    user_id = Column(String(50), nullable=True)
+    user_id = Column(String(50), nullable=False)
 
     def __repr__(self):
         return f"<Store {self.id} >"
