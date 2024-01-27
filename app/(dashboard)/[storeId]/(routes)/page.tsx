@@ -1,4 +1,3 @@
-import { getSession } from "@auth0/nextjs-auth0"
 import axios from "axios"
 
 interface DashboardProps {

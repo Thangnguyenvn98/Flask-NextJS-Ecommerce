@@ -1,5 +1,5 @@
 from importlib.metadata import version
-from flask import Flask,jsonify,request
+from flask import Flask,jsonify,request,Response
 from flask_restx import Api,Resource,fields
 from config import DevConfig
 from flask_cors import CORS,cross_origin
@@ -143,7 +143,7 @@ def requires_scope(required_scope):
 store_model = api.model(
     "Store",
     {
-        "id": fields.Integer(),
+        "id": fields.String(),
         "name": fields.String(),
         "user_id": fields.String(),
         "created_at": fields.DateTime(),
@@ -172,7 +172,6 @@ class StoresResource(Resource):
 
             # Create a new user and store
             new_store = Store(name=data.get('name'),user_id=data.get('userId'))
-            db.session.add(new_store)
             new_store.save()
 
             # Commit the changes to the database
@@ -189,14 +188,14 @@ class StoresResource(Resource):
         stores = Store.query.all()
         return stores
     
-@api.route('/api/store/<string:user_id>')
+@api.route('/api/store/<string:store_id>')
 class StoreResource(Resource):
 
     @api.marshal_with(store_model)
-    def get(self,user_id):
-        store = Store.query.filter_by(user_id=user_id).first()
+    def get(self,store_id):
+        store = Store.query.filter_by(id = store_id).first()
         if not store:
-            return {'message': 'Store not found'}, 404
+            return Response(status=204)
         return store
 
 
@@ -223,10 +222,27 @@ class UserResource(Resource):
             # User already exists, so do nothing
             return {'message': 'User already exists'}, 200
     
-@api.route('/api/admin')
-class AdminResource(Resource):
-    def get(self):
-        return jsonify(msg="Hello admin!")
+@api.route('/api/user/<string:user_id>/stores')
+class UserStoresResource(Resource):
+
+    @api.marshal_list_with(store_model)
+    def get(self,user_id):
+        stores = Store.query.filter_by(user_id=user_id).all()
+        if stores:
+            return stores
+        else:
+            return Response(status=204)
+        
+@api.route('/api/user/<string:user_id>/store')
+class UserStoreResource(Resource):
+
+    @api.marshal_with(store_model)
+    def get(self,user_id):
+        store = Store.query.filter_by(user_id=user_id).first()
+        if store:
+            return store
+        else:
+            return Response(status=204)
 
 if __name__ == '__main__':
     app.run(debug=True,port=8080)

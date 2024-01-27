@@ -1,3 +1,4 @@
+import Navbar from '@/components/navbar';
 import { getSession } from '@auth0/nextjs-auth0';
 import axios from "axios";
 import { redirect } from "next/navigation";
@@ -15,7 +16,7 @@ export default async function DashboardLayout({children,params}:{
     }
     let store;
     try {
-        const response = await axios.get(`http://127.0.0.1:8080/api/store/${userId}`) 
+        const response = await axios.get(`http://127.0.0.1:8080/api/user/${userId}/store`) 
         
         if (response.status === 400) {
             redirect('/api/auth/login')
@@ -28,13 +29,13 @@ export default async function DashboardLayout({children,params}:{
         console.error(error);
     }
    
-    if (!store) {
+    if (!store || !store.id) {
         redirect('/')
     }
     return (
         <>
         <div>
-            This will be a Navbar
+            <Navbar/>
         </div>
         {children}
         </>

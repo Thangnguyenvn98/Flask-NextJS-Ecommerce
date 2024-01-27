@@ -13,20 +13,17 @@ export default async function SetupLayout({children}:{children:React.ReactNode})
 
     let store;
     try {
-        const response = await axios.get(`http://127.0.0.1:8080/api/store/${userId}`) 
+        const response = await axios.get(`http://127.0.0.1:8080/api/user/${userId}/store`) 
         
-        if (response.status === 400) {
-            redirect('/api/auth/login')
+        if (response.status === 200) {
+            store = response.data
         }
-     else {
-        store = response.data
-    }
-}
-    catch (error) {
+  
+    }catch (error) {
         console.error(error);
     }
-    if(store) {
-        redirect(`/${store.user_id}`)
+    if(store && store.id ) {
+        redirect(`/${store.id}`)
     }
     
     return (

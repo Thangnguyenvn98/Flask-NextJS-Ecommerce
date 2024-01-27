@@ -47,7 +47,7 @@ export const StoreModal = () => {
                 
 
                 //completely refreshed, make sure add it to the db
-                window.location.assign(`/${response.data.user_id}`)
+                window.location.assign(`/${response.data.id}`)
             }catch(e) {
                 toast.error("Something went wrong")
 
