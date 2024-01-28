@@ -1,7 +1,6 @@
-import { getSession } from '@auth0/nextjs-auth0';
-import axios from 'axios';
 import { redirect } from 'next/navigation';
 import { SettingsForm } from './components/settings-form';
+import { fetchStore } from '@/hooks/fetchStore';
 
 
 interface SettingsPageProps {
@@ -11,14 +10,8 @@ interface SettingsPageProps {
 }
 
 const SettingsPage: React.FC<SettingsPageProps>= async ({params}) => {
-    const session = await getSession();
-    const user = session?.user;
-    if (!user) {
-        redirect('/api/auth/login')
-    }
-    let store
-    const response = await axios.get(`http://127.0.0.1:8080/api/store/${params.storeId}`)
-    store = response.data
+    const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}`)
+    const store = await response.json()
     if (!store || !store.id){
         redirect('/')
     }

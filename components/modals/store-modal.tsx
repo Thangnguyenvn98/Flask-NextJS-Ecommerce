@@ -28,11 +28,11 @@ export const StoreModal = () => {
     const storeModal = useStoreModal()
     const [loading,setLoading] = useState(false)
 
-    const {user} = useUser()
 
-    if (!user) {
-        redirect('api/auth/login')
-    }
+    const {user} =  useUser();
+    
+    const userId = user?.sub?.split('|')[1]
+    const modifiedUser = {...user, sub: userId};
 
     //form here is used below in Form component of ShadCN
     const form = useForm<z.infer<typeof formSchema>>(
@@ -47,8 +47,9 @@ export const StoreModal = () => {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
             try {
                 setLoading(true)
-                const data = {...values,'userId': user?.sid}
-                const response = await axios.post('/api/stores',data)
+                const registerUser = await axios.post('/api/user',modifiedUser)
+                const data = {...values,'userId': userId,}
+                const response = await axios.post('/api/store',data)
                 
 
                 //completely refreshed, make sure add it to the db

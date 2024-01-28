@@ -12,7 +12,7 @@ class Store(db.Model):
     name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.current_timestamp())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.current_timestamp())
-    user_id = db.Column(String(50), db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.id'), nullable=False)
 
 
     def __repr__(self):
@@ -29,7 +29,7 @@ class Store(db.Model):
 
 
 class User(db.Model):
-    id = db.Column(db.String(100), primary_key=True)
+    id = db.Column(db.String(50), primary_key=True)
     name = db.Column(db.String(100),nullable=False)
     picture = db.Column(db.String(500))
     stores = db.relationship('Store', backref='user', lazy=True)

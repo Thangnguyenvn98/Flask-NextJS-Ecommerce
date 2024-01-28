@@ -160,7 +160,7 @@ user_model = api.model(
     }
 )
 
-@api.route('/api/stores')
+@api.route('/api/store')
 class StoresResource(Resource):
     
     @api.marshal_with(store_model)
@@ -193,21 +193,16 @@ class StoreResource(Resource):
 
     @api.marshal_with(store_model)
     def get(self,store_id):
-        store = Store.query.filter_by(id = store_id).first()
-        if not store:
-            return Response(status=204)
+        store = Store.query.filter_by(id = store_id).first_or_404() 
         return store
 
 
 @api.route('/api/user')
 class UserResource(Resource):
-    def get(self):
-        return jsonify(msg="Testing")
-
-
+    @api.marshal_with(user_model)
     def post(self):
         user = request.get_json()
-        user_id = user.get('sid')
+        user_id = user.get('sub')
         user_name = user.get('name')
         user_picture = user.get('picture')
 
@@ -231,7 +226,7 @@ class UserStoresResource(Resource):
         if stores:
             return stores
         else:
-            return Response(status=204)
+            return {'message': 'No stores found for this user'}, 204
         
 @api.route('/api/user/<string:user_id>/store')
 class UserStoreResource(Resource):
@@ -239,10 +234,13 @@ class UserStoreResource(Resource):
     @api.marshal_with(store_model)
     def get(self,user_id):
         store = Store.query.filter_by(user_id=user_id).first()
-        if store:
+        if store is not None:
+            print(store,file=sys.stderr)
+            print("Testing 2",file=sys.stderr)
             return store
         else:
-            return Response(status=204)
+            return {'error': 'Store not found for user {}'.format(user_id)}, 404
+
 
 if __name__ == '__main__':
     app.run(debug=True,port=8080)

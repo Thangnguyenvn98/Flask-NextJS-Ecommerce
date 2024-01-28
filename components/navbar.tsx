@@ -8,16 +8,19 @@ const Navbar = async () => {
   const session = await getSession();
   const user = session?.user;
   
-  const userId = user?.sid
+  const userId = user?.sub.split('|')[1]
   if (!userId) {
       redirect('/api/auth/login')
   }
-  let stores;
+
+  let stores
   try {
-    const response = await axios.get(`http://127.0.0.1:8080/api/user/${userId}/stores`)
-    if (Array.isArray(response.data)) {
-      stores = response.data;
-    }
+    const response = await fetch(`http://127.0.0.1:8080/api/user/${userId}/stores`, {
+      cache: "no-store"
+    })
+
+    stores = await response.json()
+    console.log(stores)
   }catch (error){
     console.log(error)
   }
