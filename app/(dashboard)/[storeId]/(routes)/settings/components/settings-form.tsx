@@ -16,6 +16,8 @@ import toast from "react-hot-toast"
 import { useUser } from "@auth0/nextjs-auth0/client"
 import { useParams, useRouter } from "next/navigation"
 import { AlertModal } from "@/components/modals/alert-modal"
+import { ApiAlert } from "@/components/ui/api-alert"
+import { useOrigin } from "@/hooks/use-origin"
 
 interface SettingsFormProps {
     initialData: Store
@@ -32,6 +34,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({initialData}) => {
     const params =useParams()
     const router =useRouter()
     const [loading,setLoading] = useState(false)
+    const origin = useOrigin()
     const {user} = useUser()
     const userId = user?.sub?.split('|')[1]
     const form = useForm<SettingsFormValues>({
@@ -103,6 +106,8 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({initialData}) => {
 
             </form>
         </Form>
+        <Separator/>
+        <ApiAlert title="NEXT_PUBLIC_API_URL" description={`${origin}/api/${params.storeId}`} variant="public"/>
         </>
    
     )
