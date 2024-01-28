@@ -14,10 +14,12 @@ const SettingsPage: React.FC<SettingsPageProps>= async ({params}) => {
     const userId = user?.sub.split('|')[1]
  
     const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`)
-    const store = await response.json()
-    if (!store || !store.id || !store.user_id){
+    if(!response.ok){
         redirect('/')
     }
+    const store = await response.json()
+
+
   return (
     <div className="flex-col">
         <div className="flex-1 space-y-4 p-8 pt-6"> 
