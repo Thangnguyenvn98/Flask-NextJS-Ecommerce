@@ -169,7 +169,7 @@ class StoresResource(Resource):
             data = request.get_json()
             if 'name' not in data:
                 return {'error': 'Missing required field "name"'}, 400
-
+           
             # Create a new user and store
             new_store = Store(name=data.get('name'),user_id=data.get('userId'))
             new_store.save()

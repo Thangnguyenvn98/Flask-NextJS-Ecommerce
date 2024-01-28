@@ -16,6 +16,7 @@ import { useState } from "react"
 import axios from "axios"
 import {toast} from "react-hot-toast"
 import { useUser } from "@auth0/nextjs-auth0/client"
+import { redirect } from "next/navigation"
 
 
 //zod is required from shadcn for forms
@@ -28,6 +29,10 @@ export const StoreModal = () => {
     const [loading,setLoading] = useState(false)
 
     const {user} = useUser()
+
+    if (!user) {
+        redirect('api/auth/login')
+    }
 
     //form here is used below in Form component of ShadCN
     const form = useForm<z.infer<typeof formSchema>>(
