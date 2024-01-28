@@ -1,14 +1,16 @@
 from importlib.metadata import version
 from flask import Flask,jsonify,request,Response
-from flask_restx import Api,Resource,fields
+from flask_restx import Api,Resource
 from config import DevConfig
 from flask_cors import CORS,cross_origin
-from model import Store, User
+from model import Store, User, Billboard
 from database import db
 from flask_migrate import Migrate
 from functools import wraps
 from six.moves.urllib.request import urlopen
 from jose import jwt
+from serialize import configure_serializers
+
 import json
 
 import sys
@@ -32,6 +34,8 @@ CORS(app)
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
+store_model, user_model, billboard_model = configure_serializers(api)
+
 
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -140,25 +144,7 @@ def requires_scope(required_scope):
     return False
 
 
-store_model = api.model(
-    "Store",
-    {
-        "id": fields.String(),
-        "name": fields.String(),
-        "user_id": fields.String(),
-        "created_at": fields.DateTime(),
-        "updated_at": fields.DateTime(),
-    }
-)
 
-user_model = api.model(
-    "User",
-    {
-        "id":fields.String(),
-        "name":fields.String(),
-        "picture": fields.String(),
-    }
-)
 
 @api.route('/api/store')
 class StoresResource(Resource):
@@ -195,6 +181,14 @@ class StoreResource(Resource):
     def get(self,store_id):
         store = Store.query.filter_by(id = store_id).first_or_404() 
         return store
+    
+@api.route('/api/billboard/<string:billboard_id>')
+class BillboardResource(Resource):
+
+    @api.marshal_with(billboard_model)
+    def get(self,billboard_id):
+        billboard = Billboard.query.filter_by(id = billboard_id).first_or_404() 
+        return billboard
     
 @api.route('/api/store/<string:store_id>/<string:user_id>')
 class UserSpecificStoreResource(Resource):
