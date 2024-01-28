@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { SettingsForm } from './components/settings-form';
-import { fetchStore } from '@/hooks/fetchStore';
-
+import { getSession } from '@auth0/nextjs-auth0';
 
 interface SettingsPageProps {
     params: { 
@@ -10,9 +9,13 @@ interface SettingsPageProps {
 }
 
 const SettingsPage: React.FC<SettingsPageProps>= async ({params}) => {
-    const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}`)
+    const session = await getSession()
+    const user = session?.user
+    const userId = user?.sub.split('|')[1]
+ 
+    const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`)
     const store = await response.json()
-    if (!store || !store.id){
+    if (!store || !store.id || !store.user_id){
         redirect('/')
     }
   return (

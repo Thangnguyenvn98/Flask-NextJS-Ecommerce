@@ -16,7 +16,6 @@ import { useState } from "react"
 import axios from "axios"
 import {toast} from "react-hot-toast"
 import { useUser } from "@auth0/nextjs-auth0/client"
-import { redirect } from "next/navigation"
 
 
 //zod is required from shadcn for forms

@@ -195,6 +195,39 @@ class StoreResource(Resource):
     def get(self,store_id):
         store = Store.query.filter_by(id = store_id).first_or_404() 
         return store
+    
+@api.route('/api/store/<string:store_id>/<string:user_id>')
+class UserSpecificStoreResource(Resource):
+
+    @api.marshal_with(store_model)
+    def get(self,store_id,user_id):
+        store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        return store
+    
+    @api.marshal_with(store_model)
+    def patch(self,store_id,user_id):
+        if not user_id:
+            return {'message': 'User unauthenticated'}, 401
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        data = request.get_json()
+        if 'name' not in data:
+            return {'message': 'Name is required'}, 400
+        store_to_update = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        store_to_update.update(data.get('name'))
+        return store_to_update
+    
+    @api.marshal_with(store_model)
+    def delete (self,store_id,user_id):
+        if not user_id:
+            return {'message': 'User unauthenticated'}, 401
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+       
+        store_to_delete = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        store_to_delete.delete()
+        return store_to_delete
+
 
 
 @api.route('/api/user')
@@ -203,12 +236,11 @@ class UserResource(Resource):
     def post(self):
         user = request.get_json()
         user_id = user.get('sub')
-        user_name = user.get('name')
-        user_picture = user.get('picture')
-
         # Check if user already exists
         existing_user = User.query.get(user_id)
         if existing_user is None:
+            user_name = user.get('name')
+            user_picture = user.get('picture')
             # User does not exist, so create a new one
             new_user = User(id=user_id, name=user_name, picture=user_picture)
             new_user.save()

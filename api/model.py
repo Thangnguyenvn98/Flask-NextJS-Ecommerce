@@ -26,6 +26,10 @@ class Store(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+    def update(self,name):
+        self.name = name
+        db.session.commit()
+
 
 
 class User(db.Model):

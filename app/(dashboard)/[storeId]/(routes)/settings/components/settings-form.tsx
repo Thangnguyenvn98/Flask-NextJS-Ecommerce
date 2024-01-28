@@ -11,6 +11,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import axios from "axios"
+import toast from "react-hot-toast"
+import { useUser } from "@auth0/nextjs-auth0/client"
+import { useParams, useRouter } from "next/navigation"
 
 interface SettingsFormProps {
     initialData: Store
@@ -24,22 +28,34 @@ type SettingsFormValues = z.infer<typeof formSchema>
 
 export const SettingsForm: React.FC<SettingsFormProps> = ({initialData}) => {
     const [open, setOpen] = useState(false) //alert model calling different api every time
+    const params =useParams()
+    const router =useRouter()
     const [loading,setLoading] = useState(false)
-
+    const {user} = useUser()
+    const userId = user?.sub?.split('|')[1]
     const form = useForm<SettingsFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: initialData
     })
 
     const onSubmit = async (data: SettingsFormValues) => {
-        console.log(data)
+        try {
+            setLoading(true)
+            await axios.patch(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`,data)
+            router.refresh()
+            toast.success("Store name updated.")
+        }catch (error){
+            toast.error("Something went wrong.")
+        }finally {
+            setLoading(false)
+        }
     }
 
     return (
         <>
         <div className="flex items-center justify-between">
             <Heading title="Settings" description="Manage store preferences"/>
-            <Button variant="destructive" size="sm" onClick={()=>{}}>
+            <Button variant="destructive" disabled={loading} size="sm" onClick={()=>setOpen(true)}>
             <Trash className="h-4 w-4"/>
             </Button>
         </div>
@@ -59,7 +75,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({initialData}) => {
                     )}/>
                 </div>
 
-            <Button disabled={loading} className="" type="submit">
+            <Button disabled={loading} className="ml-auto" type="submit">
                 Save changes
             </Button>
 
