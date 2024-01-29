@@ -190,6 +190,83 @@ class BillboardResource(Resource):
         billboard = Billboard.query.filter_by(id = billboard_id).first_or_404() 
         return billboard
     
+@api.route('/api/<string:store_id>/billboards')
+class UserStoreBillboardsResource(Resource):
+    @api.marshal_with(billboard_model)
+    def post(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'Unauthenticated'},400
+        if 'label' not in data:
+            return {'error': 'Missing required field "label"'}, 400
+        if 'imageUrl' not in data:
+            return {'error': 'Image URL is required'}, 400
+        existing_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        new_billboard = Billboard(label=data.get('label'),store_id=store_id,imageUrl=data.get('imageUrl'))
+        new_billboard.save()
+        return new_billboard, 201
+    
+    @api.marshal_list_with(billboard_model)
+    def get(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        billboards = Billboard.query.filter_by(store_id=store_id).all()
+        if billboards:
+            return billboards
+        else:
+            return {'message': 'No billboards found for this store'}, 204 
+
+@api.route('/api/store/<string:store_id>/<string:billboard_id>')
+class StoreSpecificBillboardResource(Resource):
+
+    @api.marshal_with(billboard_model)
+    def get(self,store_id,billboard_id):
+        if not billboard_id:
+            return {'message': 'Billboard ID is required'}, 400
+        billboard = Billboard.query.filter_by(id=billboard_id,store_id=store_id).first_or_404()
+        return billboard
+
+
+@api.route('/api/<string:store_id>/billboards/<string:billboard_id>')
+class StoreSpecificBillboardUpdateResource(Resource):   
+    @api.marshal_with(billboard_model)
+    def patch(self,store_id,billboard_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not billboard_id:
+            return {'message': 'Billboard ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'User unauthenticated'}, 401
+        if 'label' not in data:
+            return {'message': 'Label is required'}, 400
+        if 'imageUrl' not in data:
+            return {'message': 'ImageURL is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        billboard_to_update = Billboard.query.filter_by(id=billboard_id,store_id=store_id).first_or_404()
+        billboard_to_update.update(data.get('label'),data.get('imageUrl'))
+        return billboard_to_update
+    
+   
+    
+@api.route('/api/<string:user_id>/<string:store_id>/billboard/<string:billboard_id>')
+class UserSpecificBillboardResource(Resource):
+    @api.marshal_with(billboard_model)
+    def delete (self,user_id,store_id,billboard_id):
+        if not user_id:
+            return {'message': 'Unauthenticated'}, 400
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not billboard_id:
+            return {'message': 'Billboard ID is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        billboard_to_delete = Billboard.query.filter_by(id=billboard_id,store_id=store_id).first_or_404()
+        billboard_to_delete.delete()
+        return billboard_to_delete    
+        
+    
 @api.route('/api/store/<string:store_id>/<string:user_id>')
 class UserSpecificStoreResource(Resource):
 

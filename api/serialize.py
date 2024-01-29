@@ -27,7 +27,7 @@ def configure_serializers(api):
             "id": fields.String(),
             "label": fields.String(),
             "store_id":fields.String(),
-            "imageUrl:": fields.String(),
+            "imageUrl": fields.String(),
             "created_at": fields.DateTime(),
             "updated_at": fields.DateTime(),
         }

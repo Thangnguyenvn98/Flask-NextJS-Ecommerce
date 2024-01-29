@@ -2,6 +2,8 @@ import React from 'react'
 import { BillboardForm } from './components/billboard-form'
 
 const BillboardPage = async ({params}:{params: {billboardId : string}}) => {
+    
+    
     const response = await fetch(`http://127.0.0.1:8080/api/billboard/${params.billboardId}`,{
         cache: "no-store"
     })

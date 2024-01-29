@@ -61,5 +61,18 @@ class Billboard(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.current_timestamp())
     store = db.relationship('Store', back_populates='billboards')
 
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def update(self,label,imageUrl):
+        self.label = label
+        self.imageUrl = imageUrl
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
 
 

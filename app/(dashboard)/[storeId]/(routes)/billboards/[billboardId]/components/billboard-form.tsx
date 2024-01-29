@@ -59,9 +59,14 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
     const onSubmit = async (data: BillboardFormValues) => {
         try {
             setLoading(true)
-            await axios.patch(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`,data)
+            const datas = {...data, "user_id":userId}
+            if(initialData){
+                await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/billboards/${params.billboardId}`,datas)
+            } else {
+                await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/billboards`,datas)
+            }
             router.refresh()
-            toast.success("Store name updated.")
+            toast.success(toastMessage)
         }catch (error){
             toast.error("Something went wrong.")
         }finally {
@@ -72,13 +77,13 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
     const onDelete = async () => {
         try {
             setLoading(true)
-            await axios.delete(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`)
+            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/billboard/${params.billboardId}`)
             router.refresh()
             router.push('/')
-            toast.success("Store Deleted.")
+            toast.success("Billboard Deleted.")
 
         }catch(error){
-            toast.error("Something went wrong.")
+            toast.error("Make sure you removed all categories usin this billboard first.")
         }finally {
             setLoading(false)
             setOpen(false)
