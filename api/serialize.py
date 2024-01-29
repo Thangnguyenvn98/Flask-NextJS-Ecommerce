@@ -33,5 +33,20 @@ def configure_serializers(api):
         }
     )
 
+    category_model = api.model(
+        "Category",
+        {
+            "id": fields.String(),
+            "name": fields.String(),
+            "store_id":fields.String(),
+            "billboard_id": fields.String(),
+            "billboard": fields.Nested(billboard_model),  # nested field for billboard
+            "created_at": fields.DateTime(),
+            "updated_at": fields.DateTime(),
+        }
+
+        
+    )
+
     # Optionally return the models if needed in other parts of the application
-    return store_model, user_model, billboard_model
+    return store_model, user_model, billboard_model,category_model
