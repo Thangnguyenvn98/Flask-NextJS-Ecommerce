@@ -12,11 +12,15 @@ const SettingsPage: React.FC<SettingsPageProps>= async ({params}) => {
     const session = await getSession()
     const user = session?.user
     const userId = user?.sub.split('|')[1]
- 
-    const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`)
-    if(!response.ok){
-        redirect('/')
+    if(!userId) {
+        redirect('/auth/login')
     }
+ 
+    const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}/${userId}`,{
+        cache: "no-cache"
+    })
+    console.log("helo")
+  
     const store = await response.json()
 
 

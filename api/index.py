@@ -212,25 +212,24 @@ class UserStoreBillboardsResource(Resource):
     def get(self,store_id):
         if not store_id:
             return {'message': 'Store ID is required'}, 400
-        billboards = Billboard.query.filter_by(store_id=store_id).all()
+        billboards = Billboard.query.filter_by(store_id=store_id).order_by(Billboard.created_at.desc()).all()
         if billboards:
             return billboards
         else:
-            return {'message': 'No billboards found for this store'}, 204 
+            return [],200
 
-@api.route('/api/store/<string:store_id>/<string:billboard_id>')
-class StoreSpecificBillboardResource(Resource):
+
+
+@api.route('/api/<string:store_id>/billboards/<string:billboard_id>')
+class StoreSpecificBillboardUpdateResource(Resource):
 
     @api.marshal_with(billboard_model)
     def get(self,store_id,billboard_id):
         if not billboard_id:
             return {'message': 'Billboard ID is required'}, 400
         billboard = Billboard.query.filter_by(id=billboard_id,store_id=store_id).first_or_404()
-        return billboard
-
-
-@api.route('/api/<string:store_id>/billboards/<string:billboard_id>')
-class StoreSpecificBillboardUpdateResource(Resource):   
+        return billboard 
+      
     @api.marshal_with(billboard_model)
     def patch(self,store_id,billboard_id):
         if not store_id:
@@ -272,7 +271,9 @@ class UserSpecificStoreResource(Resource):
 
     @api.marshal_with(store_model)
     def get(self,store_id,user_id):
-        store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        store = Store.query.filter_by(id=store_id).first_or_404()
+        print(store_id,file=sys.stderr)
+        print(user_id,file=sys.stderr)
         return store
     
     @api.marshal_with(store_model)

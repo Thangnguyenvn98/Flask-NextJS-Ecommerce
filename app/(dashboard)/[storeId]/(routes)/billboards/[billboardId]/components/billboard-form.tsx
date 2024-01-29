@@ -16,8 +16,7 @@ import toast from "react-hot-toast"
 import { useUser } from "@auth0/nextjs-auth0/client"
 import { useParams, useRouter } from "next/navigation"
 import { AlertModal } from "@/components/modals/alert-modal"
-import { ApiAlert } from "@/components/ui/api-alert"
-import { useOrigin } from "@/hooks/use-origin"
+
 import ImageUpload from "@/components/ui/image-upload"
 
 
@@ -38,7 +37,6 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
     const params =useParams()
     const router =useRouter()
     const [loading,setLoading] = useState(false)
-    const origin = useOrigin()
     const {user} = useUser()
     const userId = user?.sub?.split('|')[1]
 
@@ -62,10 +60,14 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
             const datas = {...data, "user_id":userId}
             if(initialData){
                 await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/billboards/${params.billboardId}`,datas)
+                router.refresh()
             } else {
                 await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/billboards`,datas)
+                router.refresh()
             }
+       
             router.refresh()
+            router.push(`/${params.storeId}/billboards`)
             toast.success(toastMessage)
         }catch (error){
             toast.error("Something went wrong.")
@@ -79,7 +81,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
             setLoading(true)
             await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/billboard/${params.billboardId}`)
             router.refresh()
-            router.push('/')
+            router.push(`/${params.storeId}/billboards`)
             toast.success("Billboard Deleted.")
 
         }catch(error){
