@@ -60,14 +60,14 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
             const datas = {...data, "user_id":userId}
             if(initialData){
                 await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/billboards/${params.billboardId}`,datas)
-                router.refresh()
+               
             } else {
                 await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/billboards`,datas)
-                router.refresh()
+         
             }
        
-            router.refresh()
             router.push(`/${params.storeId}/billboards`)
+            router.refresh()
             toast.success(toastMessage)
         }catch (error){
             toast.error("Something went wrong.")

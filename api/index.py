@@ -167,8 +167,8 @@ class StoresResource(Resource):
             print(f"Error in post method: {str(e)}")  # Print the error for debugging
             return {'error': 'Internal server error'}, 500
     
-    @cross_origin(headers=["Content-Type", "Authorization"])
-    @requires_auth
+    # @cross_origin(headers=["Content-Type", "Authorization"])
+    # @requires_auth
     @api.marshal_list_with(store_model)
     def get(self):
         stores = Store.query.all()

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 
 async function getBillboards(params:string){
-  const res = await fetch(`http://127.0.0.1:8080/api/${params}/billboards`, { cache: "no-store" });
+  const res = await fetch(`http://127.0.0.1:8080/api/${params}/billboards`, { next: { revalidate: 0 } });
   return res.json()
 }
 
