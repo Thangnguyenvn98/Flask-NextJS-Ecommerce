@@ -1,6 +1,5 @@
 from database import db
-from sqlalchemy import ForeignKey,Integer,Column, String,DateTime,func
-from sqlalchemy import String
+from sqlalchemy import func
 from sqlalchemy.orm import relationship
 import datetime
 import uuid
@@ -8,7 +7,7 @@ import uuid
 
 
 class Store(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=str(uuid.uuid4()), unique=True)
+    id = db.Column(db.String(36), primary_key=True,default=lambda: str(uuid.uuid4()), unique=True)
     name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.current_timestamp())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=datetime.datetime.now)
@@ -53,7 +52,7 @@ class User(db.Model):
         db.session.commit()
 
 class Billboard(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=str(uuid.uuid4()), unique=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
     label = db.Column(db.String(50), nullable=False)
     imageUrl = db.Column(db.String(100), nullable=False)
     store_id = db.Column(db.String(50), db.ForeignKey('store.id'), nullable=False)
@@ -79,7 +78,7 @@ class Billboard(db.Model):
         db.session.commit()
 
 class Category(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=str(uuid.uuid4()), unique=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
     store_id = db.Column(db.String(50), db.ForeignKey('store.id'), nullable=False)
     store = db.relationship('Store', back_populates='categories')
     billboard_id = db.Column(db.String(50), db.ForeignKey('billboard.id'), nullable=False)

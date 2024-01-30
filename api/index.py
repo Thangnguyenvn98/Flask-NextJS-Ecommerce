@@ -238,8 +238,9 @@ class UserSpecificBillboardResource(Resource):
             return {'message': 'Billboard ID is required'}, 400
         user_store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
         billboard_to_delete = Billboard.query.filter_by(id=billboard_id,store_id=store_id).first_or_404()
+        billboard_copy = billboard_to_delete.__dict__.copy()
         billboard_to_delete.delete()
-        return billboard_to_delete    
+        return billboard_copy    
         
 #---------------------------------BILLBOARD AND CATEGORIES--------------------------------------------- 
 
@@ -316,7 +317,7 @@ class StoreSpecificCategoryUpdateResource(Resource):
     
 # DELETE A category BASED ON MATCHING USER ID AND STORE ID AND category ID
 @api.route('/api/<string:user_id>/<string:store_id>/category/<string:category_id>')
-class UserSpecificcategoryResource(Resource):
+class UserSpecificCategoryResource(Resource):
     @api.marshal_with(category_model)
     def delete (self,user_id,store_id,category_id):
         if not user_id:
@@ -327,8 +328,9 @@ class UserSpecificcategoryResource(Resource):
             return {'message': 'category ID is required'}, 400
         user_store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
         category_to_delete = Category.query.filter_by(id=category_id,store_id=store_id).first_or_404()
+        category_to_copy = category_to_delete.__dict__.copy()
         category_to_delete.delete()
-        return category_to_delete    
+        return category_to_copy   
     
   
 
