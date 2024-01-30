@@ -11,7 +11,7 @@ const ColorPage = async ({params}:{params: {colorId : string}}) => {
         redirect('/auth/login')
     }
     
-    const response = await fetch(`http://127.0.0.1:8080/api/Color/${params.colorId}`,{
+    const response = await fetch(`http://127.0.0.1:8080/api/color/${params.colorId}`,{
         cache: "no-store"
     })
     let color = null; // Initialize with null

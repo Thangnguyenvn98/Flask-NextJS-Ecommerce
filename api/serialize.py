@@ -58,8 +58,19 @@ def configure_serializers(api):
         }
     )
 
+    color_model = api.model(
+        "Color",
+        {
+            "id": fields.String(),
+            "name": fields.String(),
+            "value":fields.String(),
+            "store_id": fields.String(),
+            "created_at": fields.DateTime(),
+            "updated_at": fields.DateTime(),
+        }
+    )
         
     
 
     # Optionally return the models if needed in other parts of the application
-    return store_model, user_model, billboard_model,category_model,size_model
+    return store_model, user_model, billboard_model,category_model,size_model,color_model

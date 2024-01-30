@@ -3,11 +3,10 @@ from flask import Flask,jsonify,request,Response
 from flask_restx import Api,Resource
 from config import DevConfig
 from flask_cors import CORS,cross_origin
-from model import Store, User, Billboard, Category, Size
+from model import Store, User, Billboard, Category, Size, Color
 from database import db
 from flask_migrate import Migrate
 from functools import wraps
-from six.moves.urllib.request import urlopen
 from jose import jwt
 from serialize import configure_serializers
 from sqlalchemy.orm import joinedload
@@ -36,7 +35,7 @@ CORS(app)
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
-store_model, user_model, billboard_model,category_model,size_model = configure_serializers(api)
+store_model, user_model, billboard_model,category_model,size_model,color_model = configure_serializers(api)
 
 
 # /server.py
@@ -116,17 +115,21 @@ class UserSpecificStoreResource(Resource):
         store_to_update = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
         store_to_update.update(data.get('name'))
         return store_to_update
-    
+
+#----------------------------------------------------------------
+@api.route('/api/<string:user_id>/<string:store_id>/store')
+class UserStoreDeleteResource(Resource):
     @api.marshal_with(store_model)
-    def delete (self,store_id,user_id):
+    def delete (self,user_id,store_id):
         if not user_id:
             return {'message': 'User unauthenticated'}, 401
         if not store_id:
             return {'message': 'Store ID is required'}, 400
        
         store_to_delete = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        store_delete_copy = store_to_delete.__dict__.copy()
         store_to_delete.delete()
-        return store_to_delete
+        return store_delete_copy
     
 @api.route('/api/user/<string:user_id>/stores')
 class UserAllStoresResource(Resource):
@@ -332,10 +335,10 @@ class UserSpecificCategoryResource(Resource):
         category_to_delete.delete()
         return category_to_copy   
 
-#-----------------------------CATEGORY AND SIZE API----------------------------------- 
-#GETTING SPECIFIC CATEGORY FROM CATEGORY ID
+#-----------------------------STORE AND COLOR API----------------------------------- 
+#GETTING SPECIFIC COLOR FROM COLOR ID
 @api.route('/api/size/<string:size_id>')
-class SinglesizeResource(Resource):
+class SingleSizeResource(Resource):
 
     @api.marshal_with(size_model)
     def get(self,size_id):
@@ -343,9 +346,9 @@ class SinglesizeResource(Resource):
         return size
 
 
-#GETTING ALL sizeS WITH STORE ID 
+#GETTING ALL SIZES WITH STORE ID 
 @api.route('/api/<string:store_id>/sizes')
-class UserStoresizesResource(Resource):
+class UserStoreSizesResource(Resource):
     @api.marshal_list_with(size_model)
     def get(self,store_id):
         if not store_id:
@@ -356,7 +359,7 @@ class UserStoresizesResource(Resource):
         else:
             return [],200
         
-#CREATE A sizeS WITH STORE ID 
+#CREATE A SIZES WITH STORE ID 
             
     @api.marshal_with(size_model)
     def post(self,store_id):
@@ -375,9 +378,9 @@ class UserStoresizesResource(Resource):
         return new_size, 201
     
     
-#GETTING size BASED ON TH STORE ID AND size ID
+#GETTING size BASED ON TH STORE ID AND COLOR ID
 @api.route('/api/<string:store_id>/sizes/<string:size_id>')
-class StoreSpecificsizeUpdateResource(Resource):
+class StoreSpecificSizeUpdateResource(Resource):
 
     @api.marshal_with(size_model)
     def get(self,store_id,size_id):
@@ -406,7 +409,7 @@ class StoreSpecificsizeUpdateResource(Resource):
     
 # DELETE A size BASED ON MATCHING USER ID AND STORE ID AND size ID
 @api.route('/api/<string:user_id>/<string:store_id>/size/<string:size_id>')
-class UserSpecificsizeResource(Resource):
+class UserSpecificSizeResource(Resource):
     @api.marshal_with(size_model)
     def delete (self,user_id,store_id,size_id):
         if not user_id:
@@ -419,7 +422,98 @@ class UserSpecificsizeResource(Resource):
         size_to_delete = Size.query.filter_by(id=size_id,store_id=store_id).first_or_404()
         size_copy = size_to_delete.__dict__.copy()
         size_to_delete.delete()
-        return size_copy    
+        return size_copy
 
+
+
+#-----------------------------STORE AND COLOR API----------------------------------- 
+#GETTING SPECIFIC COLOR FROM COLOR ID
+@api.route('/api/color/<string:color_id>')
+class SingleColorResource(Resource):
+
+    @api.marshal_with(color_model)
+    def get(self,color_id):
+        color = Color.query.filter_by(id = color_id).first_or_404() 
+        return color
+
+
+#GETTING ALL ColorS WITH STORE ID 
+@api.route('/api/<string:store_id>/colors')
+class UserStoreColorsResource(Resource):
+    @api.marshal_list_with(color_model)
+    def get(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        colors = Color.query.filter_by(store_id=store_id).order_by(Color.created_at.desc()).all()
+        if colors:
+            return colors
+        else:
+            return [],200
+        
+#CREATE A colorS WITH STORE ID 
+            
+    @api.marshal_with(color_model)
+    def post(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'Unauthenticated'},400
+        if 'name' not in data:
+            return {'error': 'Missing required field "Name"'}, 400
+        if 'value' not in data:
+            return {'error': 'Value is required'}, 400
+        existing_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        new_color = Color(name=data.get('name'),store_id=store_id,value=data.get('value'))
+        new_color.save()
+        return new_color, 201
+    
+    
+#GETTING color BASED ON TH STORE ID AND COLOR ID
+@api.route('/api/<string:store_id>/colors/<string:color_id>')
+class StoreSpecificcolorUpdateResource(Resource):
+
+    @api.marshal_with(color_model)
+    def get(self,store_id,color_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        color = Color.query.filter_by(id=color_id,store_id=store_id).first_or_404()
+        return color 
+      
+    @api.marshal_with(color_model)
+    def patch(self,store_id,color_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not color_id:
+            return {'message': 'Color ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'User unauthenticated'}, 401
+        if 'name' not in data:
+            return {'message': 'Name is required'}, 400
+        if 'value' not in data:
+            return {'message': 'Value is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        color_to_update = Color.query.filter_by(id=color_id,store_id=store_id).first_or_404()
+        color_to_update.update(data.get('name'),data.get('value'))
+        return color_to_update
+    
+# DELETE A color BASED ON MATCHING USER ID AND STORE ID AND color ID
+@api.route('/api/<string:user_id>/<string:store_id>/color/<string:color_id>')
+class UserSpecificColorResource(Resource):
+    @api.marshal_with(color_model)
+    def delete (self,user_id,store_id,color_id):
+        if not user_id:
+            return {'message': 'Unauthenticated'}, 400
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not color_id:
+            return {'message': 'color ID is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        color_to_delete = Color.query.filter_by(id=color_id,store_id=store_id).first_or_404()
+        color_copy = color_to_delete.__dict__.copy()
+        color_to_delete.delete()
+        return color_copy 
+       
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=8080)

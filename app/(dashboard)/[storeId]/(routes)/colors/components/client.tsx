@@ -31,7 +31,7 @@ export const ColorsClient: React.FC<ColorsClientProps> = ({data}) => {
         <DataTable columns={columns} data={data} searchKey="name"/>
         <Heading title="API" description="API calls for Colors"/>
         <Separator/>
-        <ApiList entityName="Colors" entityIdName="colorId"/>
+        <ApiList entityName="colors" entityIdName="colorId"/>
         </>
     )
 }
