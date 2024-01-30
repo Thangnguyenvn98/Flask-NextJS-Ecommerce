@@ -1,7 +1,7 @@
 'use client'
 
 import * as z from "zod"
-import Billboard from "@/app/interface/billboard"
+import Size from "@/app/interface/size"
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
@@ -17,22 +17,21 @@ import { useUser } from "@auth0/nextjs-auth0/client"
 import { useParams, useRouter } from "next/navigation"
 import { AlertModal } from "@/components/modals/alert-modal"
 
-import ImageUpload from "@/components/ui/image-upload"
 
 
     
 const formSchema = z.object({
-    label: z.string().min(1),
-    imageUrl: z.string().min(1)
+    name: z.string().min(1),
+    value: z.string().min(1)
 })
 
-type BillboardFormValues = z.infer<typeof formSchema>
+type SizeFormValues = z.infer<typeof formSchema>
 
-interface BillboardFormProps {
-    initialData: Billboard | null
+interface SizeFormProps {
+    initialData: Size | null
   }
 
-export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
+export const SizeForm: React.FC<SizeFormProps> = ({initialData}) => {
     const [open, setOpen] = useState(false) //alert model calling different api every time
     const params =useParams()
     const router =useRouter()
@@ -40,33 +39,33 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
     const {user} = useUser()
     const userId = user?.sub?.split('|')[1]
 
-    const title = initialData ? "Edit billboard" : "Create billboard"
-    const description = initialData ? "Edit a billboard" : "Add a new billboard "
-    const toastMessage = initialData ? "Billboard updated" : "Billboard created"
+    const title = initialData ? "Edit Size" : "Create Size"
+    const description = initialData ? "Edit a Size" : "Add a new Size "
+    const toastMessage = initialData ? "Size updated" : "Size created"
     const action = initialData ? "Save changes" : "Create"
 
 
-    const form = useForm<BillboardFormValues>({
+    const form = useForm<SizeFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: initialData || {
-            label: '',
-            imageUrl: ''
+            name: '',
+            value: ''
         }
     })
 
-    const onSubmit = async (data: BillboardFormValues) => {
+    const onSubmit = async (data: SizeFormValues) => {
         try {
             setLoading(true)
             const datas = {...data, "user_id":userId}
             if(initialData){
-                await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/billboards/${params.billboardId}`,datas)
+                await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/sizes/${params.sizeId}`,datas)
                
             } else {
-                await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/billboards`,datas)
+                await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/sizes`,datas)
          
             }
        
-            router.push(`/${params.storeId}/billboards`)
+            router.push(`/${params.storeId}/sizes`)
             router.refresh()
             toast.success(toastMessage)
         }catch (error){
@@ -79,13 +78,13 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
     const onDelete = async () => {
         try {
             setLoading(true)
-            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/billboard/${params.billboardId}`)
-            router.push(`/${params.storeId}/billboards`)
+            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/size/${params.sizeId}`)
+            router.push(`/${params.storeId}/sizes`)
             router.refresh()
-            toast.success("Billboard Deleted.")
+            toast.success("Size Deleted.")
 
         }catch(error){
-            toast.error("Make sure you removed all categories usin this billboard first.")
+            toast.error("Make sure you removed all categories using this size first.")
         }finally {
             setLoading(false)
             setOpen(false)
@@ -114,26 +113,22 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({initialData}) => {
         {/* The form */}
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
-            <FormField control={form.control} name="imageUrl" render={({field}) => (
+      
+                <div className="grid grid-cols-3 gap-8">
+                    <FormField control={form.control} name="name" render={({field}) => (
                         <FormItem>
-                            <FormLabel>Background Image</FormLabel>
+                            <FormLabel>Name</FormLabel>
                             <FormControl>
-                                <ImageUpload
-                                disabled={loading}
-                                onChange={(url)=>field.onChange(url)}
-                                onRemove={()=>field.onChange("")}
-                                value={field.value ? [field.value] : []}/>
+                                <Input disabled={loading} placeholder="Size Name" {...field}/>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
                     )}/>
-                
-                <div className="grid grid-cols-3 gap-8">
-                    <FormField control={form.control} name="label" render={({field}) => (
+                          <FormField control={form.control} name="value" render={({field}) => (
                         <FormItem>
-                            <FormLabel>Label</FormLabel>
+                            <FormLabel>Value</FormLabel>
                             <FormControl>
-                                <Input disabled={loading} placeholder="Billboard label" {...field}/>
+                                <Input disabled={loading} placeholder="Size Value" {...field}/>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>

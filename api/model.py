@@ -6,6 +6,24 @@ import uuid
 
 
 
+class User(db.Model):
+    id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(100),nullable=False)
+    picture = db.Column(db.String(500))
+    stores = db.relationship('Store', backref='user', lazy=True)
+
+
+    def __repr__(self):
+        return f"< {self.name} >"
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
 class Store(db.Model):
     id = db.Column(db.String(36), primary_key=True,default=lambda: str(uuid.uuid4()), unique=True)
     name = db.Column(db.String(50), nullable=False)
@@ -14,7 +32,8 @@ class Store(db.Model):
     user_id = db.Column(db.String(50), db.ForeignKey('user.id'), nullable=False)
     billboards = db.relationship('Billboard', back_populates='store', lazy=True)
     categories = db.relationship('Category', back_populates='store', lazy=True)
-
+    sizes =  db.relationship('Size', back_populates='store', lazy=True)
+    colors =  db.relationship('Color', back_populates='store', lazy=True)
 
     def __repr__(self):
         return f"<Store {self.id} >"
@@ -33,23 +52,6 @@ class Store(db.Model):
 
 
 
-class User(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
-    name = db.Column(db.String(100),nullable=False)
-    picture = db.Column(db.String(500))
-    stores = db.relationship('Store', backref='user', lazy=True)
-
-
-    def __repr__(self):
-        return f"< {self.name} >"
-    
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-    
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
 
 class Billboard(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
@@ -98,6 +100,58 @@ class Category(db.Model):
     def update(self,name,billboard_id):
         self.name = name
         self.billboard_id = billboard_id
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+class Size(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    store_id = db.Column(db.String(50), db.ForeignKey('store.id'), nullable=False)
+    store = db.relationship('Store', back_populates='sizes')
+    name = db.Column(db.String(50), nullable=False)
+    value = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.current_timestamp())
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.current_timestamp())
+
+
+    def __repr__(self):
+        return f"<Size {self.name} >"
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def update(self,name,value):
+        self.name = name
+        self.value = value
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+class Color(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    store_id = db.Column(db.String(50), db.ForeignKey('store.id'), nullable=False)
+    store = db.relationship('Store', back_populates='colors')
+    name = db.Column(db.String(50), nullable=False)
+    value = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.current_timestamp())
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.current_timestamp())
+
+
+    def __repr__(self):
+        return f"<Color {self.name} >"
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def update(self,name,value):
+        self.name = name
+        self.value = value
         db.session.commit()
     
     def delete(self):

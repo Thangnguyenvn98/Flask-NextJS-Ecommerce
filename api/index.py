@@ -3,7 +3,7 @@ from flask import Flask,jsonify,request,Response
 from flask_restx import Api,Resource
 from config import DevConfig
 from flask_cors import CORS,cross_origin
-from model import Store, User, Billboard, Category
+from model import Store, User, Billboard, Category, Size
 from database import db
 from flask_migrate import Migrate
 from functools import wraps
@@ -36,7 +36,7 @@ CORS(app)
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
-store_model, user_model, billboard_model,category_model = configure_serializers(api)
+store_model, user_model, billboard_model,category_model,size_model = configure_serializers(api)
 
 
 # /server.py
@@ -331,10 +331,95 @@ class UserSpecificCategoryResource(Resource):
         category_to_copy = category_to_delete.__dict__.copy()
         category_to_delete.delete()
         return category_to_copy   
+
+#-----------------------------CATEGORY AND SIZE API----------------------------------- 
+#GETTING SPECIFIC CATEGORY FROM CATEGORY ID
+@api.route('/api/size/<string:size_id>')
+class SinglesizeResource(Resource):
+
+    @api.marshal_with(size_model)
+    def get(self,size_id):
+        size = Size.query.filter_by(id = size_id).first_or_404() 
+        return size
+
+
+#GETTING ALL sizeS WITH STORE ID 
+@api.route('/api/<string:store_id>/sizes')
+class UserStoresizesResource(Resource):
+    @api.marshal_list_with(size_model)
+    def get(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        sizes = Size.query.filter_by(store_id=store_id).order_by(Size.created_at.desc()).all()
+        if sizes:
+            return sizes
+        else:
+            return [],200
+        
+#CREATE A sizeS WITH STORE ID 
+            
+    @api.marshal_with(size_model)
+    def post(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'Unauthenticated'},400
+        if 'name' not in data:
+            return {'error': 'Missing required field "Name"'}, 400
+        if 'value' not in data:
+            return {'error': 'Value is required'}, 400
+        existing_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        new_size = Size(name=data.get('name'),store_id=store_id,value=data.get('value'))
+        new_size.save()
+        return new_size, 201
     
-  
+    
+#GETTING size BASED ON TH STORE ID AND size ID
+@api.route('/api/<string:store_id>/sizes/<string:size_id>')
+class StoreSpecificsizeUpdateResource(Resource):
 
-
+    @api.marshal_with(size_model)
+    def get(self,store_id,size_id):
+        if not size_id:
+            return {'message': 'size ID is required'}, 400
+        size = Size.query.filter_by(id=size_id,store_id=store_id).first_or_404()
+        return size 
+      
+    @api.marshal_with(size_model)
+    def patch(self,store_id,size_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not size_id:
+            return {'message': 'size ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'User unauthenticated'}, 401
+        if 'name' not in data:
+            return {'message': 'Name is required'}, 400
+        if 'value' not in data:
+            return {'message': 'Value is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        size_to_update = Size.query.filter_by(id=size_id,store_id=store_id).first_or_404()
+        size_to_update.update(data.get('name'),data.get('value'))
+        return size_to_update
+    
+# DELETE A size BASED ON MATCHING USER ID AND STORE ID AND size ID
+@api.route('/api/<string:user_id>/<string:store_id>/size/<string:size_id>')
+class UserSpecificsizeResource(Resource):
+    @api.marshal_with(size_model)
+    def delete (self,user_id,store_id,size_id):
+        if not user_id:
+            return {'message': 'Unauthenticated'}, 400
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not size_id:
+            return {'message': 'size ID is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        size_to_delete = Size.query.filter_by(id=size_id,store_id=store_id).first_or_404()
+        size_copy = size_to_delete.__dict__.copy()
+        size_to_delete.delete()
+        return size_copy    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=8080)
