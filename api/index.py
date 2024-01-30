@@ -302,6 +302,7 @@ class StoreSpecificCategoryUpdateResource(Resource):
         if not category_id:
             return {'message': 'category ID is required'}, 400
         data = request.get_json()
+        print(data,file=sys.stderr)
         if 'user_id' not in data:
             return {'message': 'User unauthenticated'}, 401
         if 'name' not in data:
@@ -310,7 +311,7 @@ class StoreSpecificCategoryUpdateResource(Resource):
             return {'message': 'Billboard ID is required'}, 400
         user_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
         category_to_update = Category.query.filter_by(id=category_id,store_id=store_id).first_or_404()
-        category_to_update.update(data.get('name'),data.get('billboardID'))
+        category_to_update.update(data.get('name'),data.get('billboardId'))
         return category_to_update
     
 # DELETE A category BASED ON MATCHING USER ID AND STORE ID AND category ID
