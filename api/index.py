@@ -9,7 +9,7 @@ from flask_migrate import Migrate
 from functools import wraps
 from jose import jwt
 from serialize import configure_serializers
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, subqueryload
 
 
 import json
@@ -534,11 +534,33 @@ class UserStoreProductsResource(Resource):
     def get(self,store_id):
         if not store_id:
             return {'message': 'Store ID is required'}, 400
-        products = Product.query.options(
-                joinedload(Product.category),
-                joinedload(Product.size),
-                joinedload(Product.color)
-                ).filter_by(store_id=store_id).order_by(Product.created_at.desc()).all()
+
+        # Get URL parameters
+        categoryId = request.args.get('categoryId')
+        colorId = request.args.get('colorId')
+        sizeId = request.args.get('sizeId')
+        isFeatured = request.args.get('isFeatured')
+
+        # Create a query
+        query = Product.query.options(
+            joinedload(Product.category),
+            joinedload(Product.size),
+            joinedload(Product.color),
+            subqueryload(Product.images)  # Include images
+        ).filter_by(store_id=store_id)
+
+        # Add filters based on URL parameters
+        if categoryId:
+            query = query.filter_by(category_id=categoryId)
+        if colorId:
+            query = query.filter_by(color_id=colorId)
+        if sizeId:
+            query = query.filter_by(size_id=sizeId)
+        if isFeatured:
+            query = query.filter_by(is_featured=isFeatured)
+        # Order by creation date and execute the query
+        products = query.order_by(Product.created_at.desc()).all()
+
         if products:
             return products
         else:
@@ -601,14 +623,29 @@ class StoreSpecificProductUpdateResource(Resource):
             return {'message': 'Product ID is required'}, 400
         data = request.get_json()
         if 'user_id' not in data:
-            return {'message': 'User unauthenticated'}, 401
-        if 'label' not in data:
-            return {'message': 'Label is required'}, 400
-        if 'imageUrl' not in data:
-            return {'message': 'ImageURL is required'}, 400
+            return {'message': 'Unauthenticated'},400
+        if 'name' not in data:
+            return {'error': 'Missing required field "label"'}, 400
+        if 'price' not in data:
+            return {'error': 'Missing required field "label"'}, 400
+        if 'images' not in data or not data.get('images'):
+            return {'error': 'Image URL is required'}, 400
+        if 'sizeId' not in data:
+            return {'error': 'Size ID is required'}, 400
+        if 'categoryId' not in data:
+            return {'error': 'Category ID is required'}, 400
+        if 'colorId' not in data:
+            return {'error': 'Color ID is required'}, 400
         user_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
         product_to_update = Product.query.filter_by(id=product_id,store_id=store_id).first_or_404()
-        product_to_update.update(data.get('label'),data.get('imageUrl'))
+        product_to_update.update(data.get('name'),data.get('price'),data.get('categoryId'),data.get('colorId'),data.get('sizeId'),data.get('isFeatured'),data.get('isArchived'))
+        images_to_created = data.get('images')
+    
+        Image.query.filter_by(product_id=product_id).delete()
+        db.session.commit()
+        for image_url in images_to_created:
+            new_image = Image(url=image_url['url'],product_id=product_id)
+            new_image.save()
         return product_to_update
     
 # DELETE A product BASED ON MATCHING USER ID AND STORE ID AND product ID

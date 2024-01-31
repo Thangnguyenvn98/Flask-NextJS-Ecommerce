@@ -188,9 +188,14 @@ class Product(db.Model):
         db.session.add(self)
         db.session.commit()
     
-    def update(self,name,value):
+    def update(self,name,price,category_id,color_id,size_id,is_featured,is_archived):
         self.name = name
-        self.value = value
+        self.value = price
+        self.category_id = category_id
+        self.color_id = color_id
+        self.size_id = size_id
+        self.is_featured = False if is_featured is None else is_featured
+        self.is_archived = False if is_archived is None else is_featured
         db.session.commit()
     
     def delete(self):
@@ -212,3 +217,9 @@ class Image(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+ 
