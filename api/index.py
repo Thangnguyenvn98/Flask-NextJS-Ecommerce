@@ -3,7 +3,7 @@ from flask import Flask,jsonify,request,Response
 from flask_restx import Api,Resource
 from config import DevConfig
 from flask_cors import CORS,cross_origin
-from model import Store, User, Billboard, Category, Size, Color
+from model import Store, User, Billboard, Category, Size, Color, Product
 from database import db
 from flask_migrate import Migrate
 from functools import wraps
@@ -35,7 +35,7 @@ CORS(app)
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
-store_model, user_model, billboard_model,category_model,size_model,color_model = configure_serializers(api)
+store_model, user_model, billboard_model,category_model,size_model,color_model,product_model = configure_serializers(api)
 
 
 # /server.py
@@ -335,7 +335,7 @@ class UserSpecificCategoryResource(Resource):
         category_to_delete.delete()
         return category_to_copy   
 
-#-----------------------------STORE AND COLOR API----------------------------------- 
+#-----------------------------STORE AND SIZE API----------------------------------- 
 #GETTING SPECIFIC COLOR FROM COLOR ID
 @api.route('/api/size/<string:size_id>')
 class SingleSizeResource(Resource):
@@ -514,6 +514,100 @@ class UserSpecificColorResource(Resource):
         color_copy = color_to_delete.__dict__.copy()
         color_to_delete.delete()
         return color_copy 
-       
+
+#----------------------------------STORE AND PRODUCT--------------------------------------    
+
+#GETTING A SINGLE PRODUCT FROM PRODUCT ID   
+@api.route('/api/product/<string:product_id>')
+class SingleProductResource(Resource):
+
+    @api.marshal_with(product_model)
+    def get(self,product_id):
+        product = Product.query.filter_by(id = product_id).first_or_404() 
+        return product
+
+
+#GETTING ALL products WITH STORE ID 
+@api.route('/api/<string:store_id>/products')
+class UserStoreproductsResource(Resource):
+    @api.marshal_list_with(product_model)
+    def get(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        products = Product.query.options(
+                joinedload(Product.category),
+                joinedload(Product.size),
+                joinedload(Product.color)
+                ).filter_by(store_id=store_id).order_by(Product.created_at.desc()).all()
+        if products:
+            return products
+        else:
+            return [],200
+        
+#CREATE A productS WITH STORE ID 
+            
+    @api.marshal_with(product_model)
+    def post(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'Unauthenticated'},400
+        if 'label' not in data:
+            return {'error': 'Missing required field "label"'}, 400
+        if 'imageUrl' not in data:
+            return {'error': 'Image URL is required'}, 400
+        existing_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        new_product = Product(label=data.get('label'),store_id=store_id,imageUrl=data.get('imageUrl'))
+        new_product.save()
+        return new_product, 201
+    
+    
+#GETTING BILLBOARD BASED ON TH STORE ID AND BILLBOARD ID
+@api.route('/api/<string:store_id>/products/<string:product_id>')
+class StoreSpecificProductUpdateResource(Resource):
+
+    @api.marshal_with(product_model)
+    def get(self,store_id,product_id):
+        if not product_id:
+            return {'message': 'Product ID is required'}, 400
+        product = Product.query.filter_by(id=product_id,store_id=store_id).first_or_404()
+        return product
+      
+    @api.marshal_with(product_model)
+    def patch(self,store_id,product_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not product_id:
+            return {'message': 'Product ID is required'}, 400
+        data = request.get_json()
+        if 'user_id' not in data:
+            return {'message': 'User unauthenticated'}, 401
+        if 'label' not in data:
+            return {'message': 'Label is required'}, 400
+        if 'imageUrl' not in data:
+            return {'message': 'ImageURL is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
+        product_to_update = Product.query.filter_by(id=product_id,store_id=store_id).first_or_404()
+        product_to_update.update(data.get('label'),data.get('imageUrl'))
+        return product_to_update
+    
+# DELETE A product BASED ON MATCHING USER ID AND STORE ID AND product ID
+@api.route('/api/<string:user_id>/<string:store_id>/product/<string:product_id>')
+class UserSpecificProductResource(Resource):
+    @api.marshal_with(product_model)
+    def delete (self,user_id,store_id,product_id):
+        if not user_id:
+            return {'message': 'Unauthenticated'}, 400
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        if not product_id:
+            return {'message': 'product ID is required'}, 400
+        user_store = Store.query.filter_by(id=store_id,user_id=user_id).first_or_404()
+        product_to_delete = Product.query.filter_by(id=product_id,store_id=store_id).first_or_404()
+        product_copy = product_to_delete.__dict__.copy()
+        product_to_delete.delete()
+        return product_copy     
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=8080)

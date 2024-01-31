@@ -1,7 +1,7 @@
 'use client'
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ColorColumn } from "./columns"
+import { ProductColumn } from "./columns"
 import { Button } from "@/components/ui/button"
 import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react"
 import toast from "react-hot-toast"
@@ -12,7 +12,7 @@ import { AlertModal } from "@/components/modals/alert-modal"
 import { useUser } from "@auth0/nextjs-auth0/client"
 
 interface CellActionProps {
-    data: ColorColumn
+    data: ProductColumn
 }
 
 export const CellAction:React.FC<CellActionProps>= ({data}) => {
@@ -31,12 +31,12 @@ export const CellAction:React.FC<CellActionProps>= ({data}) => {
     const onDelete = async () => {
         try {
             setLoading(true)
-            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/color/${data.id}`)
+            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/product/${data.id}`)
             router.refresh()
-            toast.success("Color Deleted.")
+            toast.success("Product Deleted.")
 
         }catch(error){
-            toast.error("Make sure you removed all products using this color first.")
+            toast.error("Make sure you removed all categories usin this Product first.")
         }finally {
             setLoading(false)
             setOpen(false)
@@ -67,7 +67,7 @@ export const CellAction:React.FC<CellActionProps>= ({data}) => {
                 <Copy className="h-4 w-4 mr-2"/>
                 Copy Id
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={()=> router.push(`/${params.storeId}/colors/${data.id}`)}>
+            <DropdownMenuItem onClick={()=> router.push(`/${params.storeId}/products/${data.id}`)}>
                 <Edit className="h-4 w-4 mr-2"/>
                 Update
             </DropdownMenuItem>

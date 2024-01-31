@@ -1,7 +1,7 @@
 'use client'
 
 import * as z from "zod"
-import Color from "@/app/interface/color"
+import Product from "@/app/interface/product"
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
@@ -17,23 +17,23 @@ import { useUser } from "@auth0/nextjs-auth0/client"
 import { useParams, useRouter } from "next/navigation"
 import { AlertModal } from "@/components/modals/alert-modal"
 
+import ImageUpload from "@/components/ui/image-upload"
 
 
     
 const formSchema = z.object({
     name: z.string().min(1),
-    value: z.string().min(4).regex(/^#/, {
-        message: 'String must be a valid hex code'
-    })
+    price: z.number().min(1),
+    imageUrl: z.string().min(1)
 })
 
-type ColorFormValues = z.infer<typeof formSchema>
+type ProductFormValues = z.infer<typeof formSchema>
 
-interface ColorFormProps {
-    initialData: Color | null
+interface ProductFormProps {
+    initialData: Product | null
   }
 
-export const ColorForm: React.FC<ColorFormProps> = ({initialData}) => {
+export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
     const [open, setOpen] = useState(false) //alert model calling different api every time
     const params =useParams()
     const router =useRouter()
@@ -41,33 +41,34 @@ export const ColorForm: React.FC<ColorFormProps> = ({initialData}) => {
     const {user} = useUser()
     const userId = user?.sub?.split('|')[1]
 
-    const title = initialData ? "Edit Color" : "Create Color"
-    const description = initialData ? "Edit a Color" : "Add a new Color "
-    const toastMessage = initialData ? "Color updated" : "Color created"
+    const title = initialData ? "Edit Product" : "Create Product"
+    const description = initialData ? "Edit a Product" : "Add a new Product "
+    const toastMessage = initialData ? "Product updated" : "Product created"
     const action = initialData ? "Save changes" : "Create"
 
 
-    const form = useForm<ColorFormValues>({
+    const form = useForm<ProductFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: initialData || {
             name: '',
-            value: ''
+            price:'',
+            imageUrl: ''
         }
     })
 
-    const onSubmit = async (data: ColorFormValues) => {
+    const onSubmit = async (data: ProductFormValues) => {
         try {
             setLoading(true)
             const datas = {...data, "user_id":userId}
             if(initialData){
-                await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/colors/${params.colorId}`,datas)
+                await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/products/${params.productId}`,datas)
                
             } else {
-                await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/colors`,datas)
+                await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/products`,datas)
          
             }
        
-            router.push(`/${params.storeId}/colors`)
+            router.push(`/${params.storeId}/products`)
             router.refresh()
             toast.success(toastMessage)
         }catch (error){
@@ -80,13 +81,13 @@ export const ColorForm: React.FC<ColorFormProps> = ({initialData}) => {
     const onDelete = async () => {
         try {
             setLoading(true)
-            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/color/${params.colorId}`)
-            router.push(`/${params.storeId}/colors`)
+            await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/product/${params.productId}`)
+            router.push(`/${params.storeId}/Products`)
             router.refresh()
-            toast.success("Color Deleted.")
+            toast.success("Product Deleted.")
 
         }catch(error){
-            toast.error("Make sure you removed all categories using this Color first.")
+            toast.error("Make sure you removed all categories usin this Product first.")
         }finally {
             setLoading(false)
             setOpen(false)
@@ -115,25 +116,35 @@ export const ColorForm: React.FC<ColorFormProps> = ({initialData}) => {
         {/* The form */}
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
-      
+            <FormField control={form.control} name="imageUrl" render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Background Image</FormLabel>
+                            <FormControl>
+                                <ImageUpload
+                                disabled={loading}
+                                onChange={(url)=>field.onChange(url)}
+                                onRemove={()=>field.onChange("")}
+                                value={field.value ? [field.value] : []}/>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}/>
+                
                 <div className="grid grid-cols-3 gap-8">
                     <FormField control={form.control} name="name" render={({field}) => (
                         <FormItem>
                             <FormLabel>Name</FormLabel>
                             <FormControl>
-                                <Input disabled={loading} placeholder="Color Name" {...field}/>
+                                <Input disabled={loading} placeholder="Product name" {...field}/>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
                     )}/>
-                          <FormField control={form.control} name="value" render={({field}) => (
+                        <FormField control={form.control} name="price" render={({field}) => (
                         <FormItem>
-                            <FormLabel>Value</FormLabel>
+                            <FormLabel>Price</FormLabel>
                             <FormControl>
-                                <div className="flex items-center gap-x-4">
-                                <Input disabled={loading} placeholder="Color Value" {...field}/>
-                                <div className="border p-4 rounded-full" style={{backgroundColor: field.value}}/>
-                                </div>
+                                <Input disabled={loading} placeholder="Product price" {...field}/>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
