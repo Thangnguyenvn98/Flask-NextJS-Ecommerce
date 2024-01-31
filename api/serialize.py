@@ -107,8 +107,38 @@ def configure_serializers(api):
             "is_archived": fields.Boolean()
         }
     )
+
+    image_model = api.model(
+        "Image", {
+            "id": fields.String(),
+            "url":fields.String(),
+            "product_id": fields.String(),
+            "created_at": fields.DateTime(),
+            "updated_at": fields.DateTime()
+        }
+    )
+
+    full_product_model = api.model (
+         "Product",
+         {
+         "id": fields.String(),
+            "name": fields.String(),
+            "price": fields.Float(),
+            "store_id":fields.String(),
+            "category_id": fields.String(),
+            "color_id": fields.String(),
+            "created_at": fields.DateTime(),
+            "updated_at": fields.DateTime(),
+            "is_featured": fields.Boolean(),
+            "is_archived": fields.Boolean(),
+            "images": fields.Nested(image_model),
+            "category": fields.Nested(category_model),
+            "color": fields.Nested(color_model),
+            "size": fields.Nested(size_model),
+           
+     })
         
     
 
     # Optionally return the models if needed in other parts of the application
-    return store_model, user_model, billboard_model,category_model,size_model,color_model,product_model
+    return store_model, user_model, billboard_model,category_model,size_model,color_model,product_model,full_product_model

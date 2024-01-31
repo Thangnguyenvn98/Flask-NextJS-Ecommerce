@@ -35,7 +35,7 @@ CORS(app)
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
-store_model, user_model, billboard_model,category_model,size_model,color_model,product_model = configure_serializers(api)
+store_model, user_model, billboard_model,category_model,size_model,color_model,product_model,full_product_model = configure_serializers(api)
 
 
 # /server.py
@@ -527,10 +527,35 @@ class SingleProductResource(Resource):
         return product
 
 
+@api.route('/api/store/<string:store_id>/products')
+class UserStoreProductsResource(Resource):
+    @api.marshal_list_with(product_model)
+    def get(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+
+        # Create a query
+        query = Product.query.options(
+            joinedload(Product.category),
+            joinedload(Product.size),
+            joinedload(Product.color),
+            subqueryload(Product.images)  # Include images
+        ).filter_by(store_id=store_id)
+   
+        # Order by creation date and execute the query
+        products = query.order_by(Product.created_at.desc()).all()
+
+        if products:
+            return products
+        else:
+            return [],200
+
+
+
 #GETTING ALL products WITH STORE ID 
 @api.route('/api/<string:store_id>/products')
 class UserStoreProductsResource(Resource):
-    @api.marshal_list_with(product_model)
+    @api.marshal_list_with(full_product_model)
     def get(self,store_id):
         if not store_id:
             return {'message': 'Store ID is required'}, 400
@@ -547,7 +572,7 @@ class UserStoreProductsResource(Resource):
             joinedload(Product.size),
             joinedload(Product.color),
             subqueryload(Product.images)  # Include images
-        ).filter_by(store_id=store_id)
+        ).filter_by(store_id=store_id,is_archived=False)
 
         # Add filters based on URL parameters
         if categoryId:
@@ -604,11 +629,11 @@ class UserStoreProductsResource(Resource):
         return new_product, 201
     
     
-#GETTING BILLBOARD BASED ON TH STORE ID AND BILLBOARD ID
+#GETTING PRODUCTS BASED ON TH STORE ID AND PRODUCTS ID
 @api.route('/api/<string:store_id>/products/<string:product_id>')
 class StoreSpecificProductUpdateResource(Resource):
 
-    @api.marshal_with(product_model)
+    @api.marshal_with(full_product_model)
     def get(self,store_id,product_id):
         if not product_id:
             return {'message': 'Product ID is required'}, 400

@@ -6,7 +6,7 @@ import { formatter } from '@/lib/utils';
 
 
 async function getProducts(params:string){
-  const res = await fetch(`http://127.0.0.1:8080/api/${params}/products`, { next: { revalidate: 0 } });
+  const res = await fetch(`http://127.0.0.1:8080/api/store/${params}/products`, { next: { revalidate: 0 } });
   return res.json()
 }
 

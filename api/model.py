@@ -35,6 +35,7 @@ class Store(db.Model):
     sizes =  db.relationship('Size', back_populates='store', lazy=True)
     colors =  db.relationship('Color', back_populates='store', lazy=True)
     products =  db.relationship('Product', back_populates='store', lazy=True)
+    orders = db.relationship('Order', back_populates='store', lazy=True)
 
     def __repr__(self):
         return f"<Store {self.id} >"
@@ -190,12 +191,12 @@ class Product(db.Model):
     
     def update(self,name,price,category_id,color_id,size_id,is_featured,is_archived):
         self.name = name
-        self.value = price
+        self.price = price
         self.category_id = category_id
         self.color_id = color_id
         self.size_id = size_id
         self.is_featured = False if is_featured is None else is_featured
-        self.is_archived = False if is_archived is None else is_featured
+        self.is_archived = False if is_archived is None else is_archived
         db.session.commit()
     
     def delete(self):
@@ -222,4 +223,21 @@ class Image(db.Model):
         db.session.delete(self)
         db.session.commit()
 
- 
+class Order(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    store_id = db.Column(db.String(50), db.ForeignKey('store.id'), nullable=False)
+    store = db.relationship('Store',back_populates='orders')
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.current_timestamp())
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.current_timestamp())
+    order_items = db.relationship('OrderItem',back_populates='order')
+    is_paid = db.Column(db.Boolean(), default=False)
+    phone = db.Column(db.String(100),nullable=False,default='')
+    address = db.Column(db.String(100),nullable=False,default='')
+
+class OrderItem(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    order_id= db.Column(db.String(50),db.ForeignKey('order.id'),nullable=False)
+    order=db.relationship('Order',back_populates="orderitems")
+    product_id= db.Column(db.String(50),db.ForeignKey('product.id'),nullable=False)
+    product = db.relationship('Product',back_populates="orderitems")
+    
