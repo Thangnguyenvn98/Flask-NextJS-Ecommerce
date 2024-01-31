@@ -10,7 +10,7 @@ import { Trash } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import axios from "axios"
 import toast from "react-hot-toast"
@@ -19,6 +19,11 @@ import { useParams, useRouter } from "next/navigation"
 import { AlertModal } from "@/components/modals/alert-modal"
 
 import ImageUpload from "@/components/ui/image-upload"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Category from "@/app/interface/category"
+import Color from "@/app/interface/color"
+import Size from "@/app/interface/size"
+import { Checkbox } from "@/components/ui/checkbox"
 
 
     
@@ -39,9 +44,12 @@ interface ProductFormProps {
     initialData: Product & {
         images: Image[]
     }| null
+    categories: Category[];
+    colors: Color[];
+    sizes: Size[]
   }
 
-export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
+export const ProductForm: React.FC<ProductFormProps> = ({initialData,categories,colors,sizes}) => {
     const [open, setOpen] = useState(false) //alert model calling different api every time
     const params =useParams()
     const router =useRouter()
@@ -79,6 +87,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
                 await axios.patch(`http://127.0.0.1:8080/api/${params.storeId}/products/${params.productId}`,datas)
                
             } else {
+                console.log("DATASSSS COMINGS")
+                console.log(datas)
                 await axios.post(`http://127.0.0.1:8080/api/${params.storeId}/products`,datas)
          
             }
@@ -97,7 +107,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
         try {
             setLoading(true)
             await axios.delete(`http://127.0.0.1:8080/api/${userId}/${params.storeId}/product/${params.productId}`)
-            router.push(`/${params.storeId}/Products`)
+            router.push(`/${params.storeId}/products`)
             router.refresh()
             toast.success("Product Deleted.")
 
@@ -162,6 +172,110 @@ export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
                                 <Input type="number" disabled={loading} placeholder="9.99" {...field}/>
                             </FormControl>
                             <FormMessage/>
+                        </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="categoryId" render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Category</FormLabel>
+                           <Select disabled={loading} onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger >
+                                    <SelectValue defaultValue={field.value} placeholder="Select a categorie"/>
+
+                                    
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {categories.map((categorie) =>(
+                                    <SelectItem key={categorie.id}
+                                    value={categorie.id}
+                                    >
+                                            {categorie.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                           </Select>
+                            <FormMessage/>
+                        </FormItem>
+                    )}/>
+                                <FormField control={form.control} name="sizeId" render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Size</FormLabel>
+                           <Select disabled={loading} onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger >
+                                    <SelectValue defaultValue={field.value} placeholder="Select a Size"/>
+
+                                    
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {sizes.map((size) =>(
+                                    <SelectItem key={size.id}
+                                    value={size.id}
+                                    >
+                                            {size.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                           </Select>
+                            <FormMessage/>
+                        </FormItem>
+                    )}/>
+                                <FormField control={form.control} name="colorId" render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Color</FormLabel>
+                           <Select disabled={loading} onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger >
+                                    <SelectValue defaultValue={field.value} placeholder="Select a color"/>
+
+                                    
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {colors.map((color) =>(
+                                    <SelectItem key={color.id}
+                                    value={color.id}
+                                    >
+                                            {color.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                           </Select>
+                            <FormMessage/>
+                        </FormItem>
+                    )}/>
+                          <FormField control={form.control} name="isFeatured" render={({field}) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange}/>
+                               
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                            <FormLabel>
+                                    Featured
+                                </FormLabel>
+                                <FormDescription>
+                                    This product will appear on the home page
+                                </FormDescription>
+                            </div>
+                        </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="isArchived" render={({field}) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange}/>
+                               
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                            <FormLabel>
+                                    Archived
+                                </FormLabel>
+                                <FormDescription>
+                                    This product will not appear anywhere on the home page
+                                </FormDescription>
+                            </div>
                         </FormItem>
                     )}/>
                 </div>

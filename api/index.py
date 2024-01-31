@@ -3,7 +3,7 @@ from flask import Flask,jsonify,request,Response
 from flask_restx import Api,Resource
 from config import DevConfig
 from flask_cors import CORS,cross_origin
-from model import Store, User, Billboard, Category, Size, Color, Product
+from model import Store, User, Billboard, Category, Size, Color, Product, Image
 from database import db
 from flask_migrate import Migrate
 from functools import wraps
@@ -529,7 +529,7 @@ class SingleProductResource(Resource):
 
 #GETTING ALL products WITH STORE ID 
 @api.route('/api/<string:store_id>/products')
-class UserStoreproductsResource(Resource):
+class UserStoreProductsResource(Resource):
     @api.marshal_list_with(product_model)
     def get(self,store_id):
         if not store_id:
@@ -553,13 +553,32 @@ class UserStoreproductsResource(Resource):
         data = request.get_json()
         if 'user_id' not in data:
             return {'message': 'Unauthenticated'},400
-        if 'label' not in data:
+        if 'name' not in data:
             return {'error': 'Missing required field "label"'}, 400
-        if 'imageUrl' not in data:
+        if 'price' not in data:
+            return {'error': 'Missing required field "label"'}, 400
+        if 'images' not in data or not data.get('images'):
             return {'error': 'Image URL is required'}, 400
+        if 'isArchived' not in data:
+            return {'error': 'Archived is required'},400
+        if 'isFeatured' not in data:
+            return {'error': 'Featured is required'},400
+        if 'sizeId' not in data:
+            return {'error': 'Size ID is required'}, 400
+        if 'categoryId' not in data:
+            return {'error': 'Category ID is required'}, 400
+        if 'colorId' not in data:
+            return {'error': 'Color ID is required'}, 400
         existing_store = Store.query.filter_by(id=store_id,user_id=data.get('user_id')).first_or_404()
-        new_product = Product(label=data.get('label'),store_id=store_id,imageUrl=data.get('imageUrl'))
+        new_product = Product(name=data.get('name'),store_id=store_id,
+                              price=data.get('price'),category_id=data.get('categoryId'),is_featured=data.get('isFeatured'),is_archived=data.get('isArchived'),
+                              size_id=data.get('sizeId'),color_id=data.get('colorId'))
         new_product.save()
+        images = data.get('images')
+        for image_url in images:
+            new_image = Image(url=image_url['url'],product_id=new_product.id)
+            new_image.save()
+        
         return new_product, 201
     
     

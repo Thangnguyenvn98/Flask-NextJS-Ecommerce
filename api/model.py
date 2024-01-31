@@ -206,3 +206,9 @@ class Image(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.current_timestamp())
 
 
+    def __repr__(self):
+        return f"<Image {self.id} >"
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()

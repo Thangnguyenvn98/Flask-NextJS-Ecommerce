@@ -103,6 +103,8 @@ def configure_serializers(api):
             "images": fields.Nested(image_url_model),
             "created_at": fields.DateTime(),
             "updated_at": fields.DateTime(),
+            "is_featured": fields.Boolean(),
+            "is_archived": fields.Boolean()
         }
     )
         

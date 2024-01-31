@@ -4,15 +4,10 @@ import { ColorsClient } from './components/client'
 import { ColorColumn } from './components/columns';
 
 
-async function getColors(params:string){
-  const res = await fetch(`http://127.0.0.1:8080/api/${params}/colors`, { next: { revalidate: 0 } });
-  return res.json()
-}
-
 const ColorsPage = async ({params}:{params:{storeId:string}}) => {
 
-
-  const colors = await getColors(params.storeId)
+  const response = await fetch(`http://127.0.0.1:8080/api/${params.storeId}/colors`, { next: { revalidate: 0 } });
+  const colors = await response.json();
   
  
 
