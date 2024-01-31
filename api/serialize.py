@@ -33,6 +33,10 @@ def configure_serializers(api):
         }
     )
 
+    billboard_label_model = api.model("Billboard", {
+    'label': fields.String()    
+    })
+
     category_model = api.model(
         "Category",
         {
@@ -40,7 +44,7 @@ def configure_serializers(api):
             "name": fields.String(),
             "store_id":fields.String(),
             "billboard_id": fields.String(),
-            "billboard": fields.Nested(billboard_model),  # nested field for billboard
+            "billboard": fields.Nested(billboard_label_model),  # nested field for billboard
             "created_at": fields.DateTime(),
             "updated_at": fields.DateTime(),
         }
@@ -69,6 +73,21 @@ def configure_serializers(api):
             "updated_at": fields.DateTime(),
         }
     )
+    category_name_model = api.model("Category", {
+    'name': fields.String()
+    })
+
+    size_name_model = api.model("Size", {
+    'name': fields.String()
+    })
+
+    color_value_model = api.model("Color", {
+    'value': fields.String()
+    })
+
+    image_url_model = api.model("Image", {
+        'url': fields.String()
+    })
 
     product_model = api.model(
         "Product",
@@ -78,9 +97,10 @@ def configure_serializers(api):
             "price": fields.Float(),
             "store_id":fields.String(),
             "store_id": fields.String(),
-            "category": fields.Nested(category_model), # nested field for billboard
-            "size": fields.Nested(size_model),
-            "color": fields.Nested(color_model),
+            "category": fields.Nested(category_name_model),
+            "size": fields.Nested(size_name_model),
+            "color": fields.Nested(color_value_model),
+            "images": fields.Nested(image_url_model),
             "created_at": fields.DateTime(),
             "updated_at": fields.DateTime(),
         }

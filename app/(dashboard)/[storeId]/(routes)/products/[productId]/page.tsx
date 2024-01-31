@@ -11,7 +11,7 @@ const ProductPage = async ({params}:{params: {productId : string}}) => {
         redirect('/auth/login')
     }
     
-    const response = await fetch(`http://127.0.0.1:8080/api/Product/${params.productId}`,{
+    const response = await fetch(`http://127.0.0.1:8080/api/product/${params.productId}`,{
         cache: "no-store"
     })
     let product = null; // Initialize with null

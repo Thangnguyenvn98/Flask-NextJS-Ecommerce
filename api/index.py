@@ -523,7 +523,7 @@ class SingleProductResource(Resource):
 
     @api.marshal_with(product_model)
     def get(self,product_id):
-        product = Product.query.filter_by(id = product_id).first_or_404() 
+        product = Product.query.options(joinedload(Product.images)).filter_by(id=product_id).first_or_404()
         return product
 
 

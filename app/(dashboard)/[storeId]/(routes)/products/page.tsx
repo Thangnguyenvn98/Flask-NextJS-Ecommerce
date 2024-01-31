@@ -2,6 +2,7 @@
 import { format } from 'date-fns';
 import { ProductClient } from './components/client'
 import { ProductColumn } from './components/columns';
+import { formatter } from '@/lib/utils';
 
 
 async function getProducts(params:string){
@@ -20,8 +21,13 @@ const ProductsPage = async ({params}:{params:{storeId:string}}) => {
   const formattedProducts: ProductColumn[] = products.map((item:any) => ({
     id: item.id,
     name: item.name,
-    price: item.price,
-    created_at: format(item.created_at, "MMMM do, yyyy")
+    price: formatter.format(item.price.toNumber()),
+    category: item.category.name,
+    size: item.category.name,
+    color:item.color.value,
+    isFeatured: item.is_featured,
+    isArchived: item.is_archived,
+    createdAt: format(item.created_at, "MMMM do, yyyy")
   }))
   console.log(formattedProducts)
   console.log("data")

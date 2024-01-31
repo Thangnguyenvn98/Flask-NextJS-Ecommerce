@@ -2,6 +2,7 @@
 
 import * as z from "zod"
 import Product from "@/app/interface/product"
+import Image from "@/app/interface/image"
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
@@ -23,14 +24,21 @@ import ImageUpload from "@/components/ui/image-upload"
     
 const formSchema = z.object({
     name: z.string().min(1),
-    price: z.number().min(1),
-    imageUrl: z.string().min(1)
+    price: z.coerce.number().min(1),
+    images: z.object({url: z.string()}).array(),
+    categoryId: z.string().min(1),
+    colorId: z.string().min(1),
+    sizeId: z.string().min(1),
+    isFeatured: z.boolean().default(false).optional(),
+    isArchived: z.boolean().default(false).optional()
 })
 
 type ProductFormValues = z.infer<typeof formSchema>
 
 interface ProductFormProps {
-    initialData: Product | null
+    initialData: Product & {
+        images: Image[]
+    }| null
   }
 
 export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
@@ -49,10 +57,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: initialData || {
+        defaultValues: initialData ? {...initialData,
+        price: parseFloat(String(initialData?.price))
+        } : {
             name: '',
-            price:'',
-            imageUrl: ''
+            price:0,
+            images: [],
+            categoryId: '',
+            colorId: '',
+            sizeId: '',
+            isFeatured: false,
+            isArchived: false
         }
     })
 
@@ -116,15 +131,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
         {/* The form */}
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
-            <FormField control={form.control} name="imageUrl" render={({field}) => (
+            <FormField control={form.control} name="images" render={({field}) => (
                         <FormItem>
-                            <FormLabel>Background Image</FormLabel>
+                            <FormLabel>Images</FormLabel>
                             <FormControl>
                                 <ImageUpload
                                 disabled={loading}
-                                onChange={(url)=>field.onChange(url)}
-                                onRemove={()=>field.onChange("")}
-                                value={field.value ? [field.value] : []}/>
+                                onChange={(url)=>field.onChange([...field.value, {url}])}
+                                onRemove={(url)=>field.onChange([...field.value.filter((current) => current.url !== url)])}
+                                value={field.value.map((image) => image.url)}/>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
@@ -144,7 +159,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({initialData}) => {
                         <FormItem>
                             <FormLabel>Price</FormLabel>
                             <FormControl>
-                                <Input disabled={loading} placeholder="Product price" {...field}/>
+                                <Input type="number" disabled={loading} placeholder="9.99" {...field}/>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
