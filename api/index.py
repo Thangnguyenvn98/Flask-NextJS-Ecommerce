@@ -1,15 +1,18 @@
 from importlib.metadata import version
-from flask import Flask,jsonify,request,Response
+from flask import Flask,jsonify,request
 from flask_restx import Api,Resource
 from config import DevConfig
 from flask_cors import CORS,cross_origin
-from model import Store, User, Billboard, Category, Size, Color, Product, Image
+from model import Store, User, Billboard, Category, Size, Color, Product, Image, Order,OrderItem
 from database import db
 from flask_migrate import Migrate
 from functools import wraps
 from jose import jwt
 from serialize import configure_serializers
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, subqueryload
+from decouple import config
+import stripe
 
 
 import json
@@ -32,10 +35,19 @@ app=Flask(__name__)
 app.config.from_object(DevConfig)
 CORS(app)
 
+stripe_keys = {
+        "secret_key": config("STRIPE_SECRET_KEY"),
+        "publishable_key": config("STRIPE_PUBLISHABLE_KEY"),
+    }
+
+stripe.api_key = stripe_keys['secret_key']
+endpoint_secret = 'whsec_9827f858a1435d6aec418e0ef84bd91d32639f3ed4cfd5209eecec527febd9d7'
+
+
 db.init_app(app)
 migrate=Migrate(app,db)
 api=Api(app,doc='/api/docs')
-store_model, user_model, billboard_model,category_model,size_model,color_model,product_model,full_product_model = configure_serializers(api)
+store_model, user_model, billboard_model,category_model,size_model,color_model,product_model,full_product_model,order_model = configure_serializers(api)
 
 
 # /server.py
@@ -296,7 +308,7 @@ class StoreSpecificCategoryUpdateResource(Resource):
     def get(self,store_id,category_id):
         if not category_id:
             return {'message': 'category ID is required'}, 400
-        category = Category.query.filter_by(id=category_id,store_id=store_id).first_or_404()
+        category = Category.query.options(joinedload(Category.billboard)).filter_by(id=category_id,store_id=store_id).first_or_404()
         return category 
       
     @api.marshal_with(category_model)
@@ -689,7 +701,117 @@ class UserSpecificProductResource(Resource):
         product_to_delete = Product.query.filter_by(id=product_id,store_id=store_id).first_or_404()
         product_copy = product_to_delete.__dict__.copy()
         product_to_delete.delete()
-        return product_copy     
+        return product_copy 
+
+
+@api.route('/api/<string:store_id>/checkout')
+class UserCheckOutResource(Resource):
+    
+    def post(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        data = request.get_json()
+        if 'productIds' not in data:
+            return {'message': 'Product ids are required'}, 400
+        print(data.get('productIds'),file=sys.stderr)
+        # products = Product.query.filter_by(id=data.get('productIds'))
+        productIds = data.get('productIds')
+        products = Product.query.filter(Product.id.in_(productIds)).all()
+        print(products,file=sys.stderr)
+        line_items = []
+        for product in products:
+            line_items.append({
+                'quantity':1,
+                'price_data':{
+                    'currency':'USD',
+                    'product_data':{
+                        'name': product.name
+                    },
+                    'unit_amount':int(product.price*100)
+                }
+            })
+        new_order = Order(store_id=store_id,is_paid=False)
+        new_order.save()
+        for product in products:
+            orderitem = OrderItem(product_id=product.id,order=new_order)
+            orderitem.save()
+        
+        session = stripe.checkout.Session.create(
+        line_items=line_items,
+        billing_address_collection='required',
+        phone_number_collection={"enabled": True},
+        mode='payment',
+        success_url='http://localhost:3001/cart?success=1',
+        cancel_url='http://localhost:3001/cart?cancelled=1',
+        metadata={
+        'orderId': new_order.id
+        },
+        )
+        return jsonify({'url' : session.url})
+#----------------------------------------------------------------
+    
+@api.route('/api/<string:store_id>/orders')
+class StoreOrderResource(Resource):
+    
+    @api.marshal_list_with(order_model)
+    def get(self,store_id):
+        if not store_id:
+           return {'message': 'Store ID is required'}, 400
+        orders = Order.query.filter_by(store_id=store_id).order_by(Order.created_at.desc()).all()
+        if orders:
+            return orders
+        return [],200
+
+@api.route('/api/webhook')
+class StoreOrderWebhook(Resource):
+
+    def post(self):
+        event=None
+       
+        payload = request.get_data(as_text=True)
+
+        sig_header = request.headers['STRIPE_SIGNATURE']
+
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+        )
+        except ValueError as e:
+        # Invalid payload
+            raise e
+        except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+            raise e
+
+    # Handle the event
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            print(session,file=sys.stderr)
+            phone = session['customer_details']['phone']
+            address = session['customer_details']['address']
+            address_components = [
+                address['line1'],
+                address['line2'],
+                address['city'],
+                address['state'],
+                address['postal_code'],
+                address['country']
+            ]
+            address_string = ', '.join(filter(None, address_components))
+            order_id = session['metadata']['orderId']
+            order=Order.query.get(order_id)
+            if order:
+                order.update(True,address_string,phone)
+            for order_item in order.orderitems:
+                product=Product.query.get(order_item.product_id)
+                if product:
+                    product.update_is_archived()
+            
+    # ... handle other event types
+   
+
+        return None,200
+         
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True,port=8080)
+    app.run(debug=True,port=8080)

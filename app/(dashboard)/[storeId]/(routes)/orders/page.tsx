@@ -12,22 +12,21 @@ const OrdersPage = async ({params}:{params:{storeId:string}}) => {
 
   const orders = await response.json()
   
- 
+  console.log(orders)
   //reduce function taking the total item reduce it starting at 9
 
   const formattedOrders: OrderColumn[] = orders.map((item:any) => ({
     id: item.id,
     phone: item.phone,
     address: item.address,
-    products: item.orderItems.map((orderItem:any)=> orderItem.product.name).join(', '),
-    totalPrice: formatter.format(item.orderItems.reduce((total :any , item:any) => {
-      return total + Number(item.product.price)
+    products: item.orderitems.map((orderItem:any)=> orderItem.products.name).join(', '),
+    totalPrice: formatter.format(item.orderitems.reduce((total :any , item:any) => {
+      return total + Number(item.products.price)
     },0)),
     isPaid: item.is_paid,
-    created_at: format(item.created_at, "MMMM do, yyyy")
+    
   }))
-  console.log(formattedOrders)
-  console.log("data")
+ 
 
   return (
     <div className="flex-col ">

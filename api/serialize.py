@@ -33,9 +33,6 @@ def configure_serializers(api):
         }
     )
 
-    billboard_label_model = api.model("Billboard", {
-    'label': fields.String()    
-    })
 
     category_model = api.model(
         "Category",
@@ -44,7 +41,7 @@ def configure_serializers(api):
             "name": fields.String(),
             "store_id":fields.String(),
             "billboard_id": fields.String(),
-            "billboard": fields.Nested(billboard_label_model),  # nested field for billboard
+            "billboard": fields.Nested(billboard_model),  # nested field for billboard
             "created_at": fields.DateTime(),
             "updated_at": fields.DateTime(),
         }
@@ -137,8 +134,27 @@ def configure_serializers(api):
             "size": fields.Nested(size_model),
            
      })
+    orderitem_model = api.model (
+        "OrderItem",
+        {
+            "id":fields.String(),
+            "products":fields.Nested(product_model),
+
+        })
+    
+    order_model = api.model(
+        "Order",
+        {
+            "id": fields.String(),
+            "phone":fields.String(),
+            "address":fields.String(),
+            "is_paid":fields.Boolean(),
+            "orderitems":fields.Nested(orderitem_model),
+             
+        }
+    )
         
     
 
     # Optionally return the models if needed in other parts of the application
-    return store_model, user_model, billboard_model,category_model,size_model,color_model,product_model,full_product_model
+    return store_model, user_model, billboard_model,category_model,size_model,color_model,product_model,full_product_model,order_model

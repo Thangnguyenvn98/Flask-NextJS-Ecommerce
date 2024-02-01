@@ -183,7 +183,7 @@ class Product(db.Model):
     orderitems = db.relationship('OrderItem', back_populates='products')
 
     def __repr__(self):
-        return f"<Color {self.name} >"
+        return f"<{self.name} the price is {self.price} >"
 
     def save(self):
         db.session.add(self)
@@ -197,6 +197,10 @@ class Product(db.Model):
         self.size_id = size_id
         self.is_featured = False if is_featured is None else is_featured
         self.is_archived = False if is_archived is None else is_archived
+        db.session.commit()
+
+    def update_is_archived(self):
+        self.is_archived = True
         db.session.commit()
     
     def delete(self):
@@ -234,9 +238,41 @@ class Order(db.Model):
     phone = db.Column(db.String(100),nullable=False,default='')
     address = db.Column(db.String(100),nullable=False,default='')
 
+
+    def __repr__(self):
+        return f"<Order is_paid: {self.is_paid} >"
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self,is_paid,address,phone):
+        self.is_paid = is_paid
+        self.address = address
+        self.phone = phone
+        db.session.commit()
+
+
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
 class OrderItem(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
     order_id= db.Column(db.String(50),db.ForeignKey('order.id'),nullable=False)
     order=db.relationship('Order',back_populates="orderitems")
     product_id= db.Column(db.String(50),db.ForeignKey('product.id'),nullable=False)
     products = db.relationship('Product',back_populates="orderitems")
+
+
+    def __repr__(self):
+        return f"<OrderItem: {self.products} >"
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
