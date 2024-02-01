@@ -3,6 +3,7 @@ import Container from './ui/container'
 import Link from 'next/link'
 import MainNav from './main-nav'
 import getCategories from '@/actions/get-categories'
+import NavbarActions from './navbar-actions'
 
 const Navbar = async () => {
   const categories = await getCategories()
@@ -14,7 +15,7 @@ const Navbar = async () => {
         <p className="font-bold text-xl">STORE</p>
        </Link>
        <MainNav data={categories}/>
-       
+       <NavbarActions/>
             </div>
       
         </Container>
