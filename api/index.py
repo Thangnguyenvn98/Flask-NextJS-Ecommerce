@@ -582,7 +582,8 @@ class UserStoreProductsResource(Resource):
         if sizeId:
             query = query.filter_by(size_id=sizeId)
         if isFeatured:
-            query = query.filter_by(is_featured=isFeatured)
+            if isFeatured == "true":
+                query = query.filter_by(is_featured=True)
         # Order by creation date and execute the query
         products = query.order_by(Product.created_at.desc()).all()
 
