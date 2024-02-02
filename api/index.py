@@ -806,11 +806,18 @@ class StoreOrderWebhook(Resource):
                 product=Product.query.get(order_item.product_id)
                 if product:
                     product.update_is_archived()
-            
-    # ... handle other event types
-   
-
+    
         return None,200
+
+#-------------Retrieve paid orders-----------------------
+@api.route('/api/<string:store_id>/orders/paid')
+class OrdersPaidResource(Resource):
+    @api.marshal_list_with(order_model)
+    def get(self,store_id):
+        if not store_id:
+            return {'message': 'Store ID is required'}, 400
+        orders = Order.query.filter_by(is_paid=True,store_id=store_id)
+
          
 
 if __name__ == '__main__':
