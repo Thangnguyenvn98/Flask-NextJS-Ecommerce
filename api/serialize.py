@@ -150,6 +150,7 @@ def configure_serializers(api):
             "address":fields.String(),
             "is_paid":fields.Boolean(),
             "orderitems":fields.Nested(orderitem_model),
+            "created_at":fields.DateTime()
              
         }
     )

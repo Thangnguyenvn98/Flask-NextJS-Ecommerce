@@ -1,4 +1,8 @@
+import { getGraphRevenue } from "@/actions/get-graph-revenue"
+import { getSalesCount } from "@/actions/get-sales-count"
+import { getStockCount } from "@/actions/get-stock-count"
 import { getTotalRevenue } from "@/actions/get-total-revenue"
+import Overview from "@/components/overview"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
@@ -11,16 +15,12 @@ interface DashboardProps {
 }
 const DashboardPage: React.FC<DashboardProps> = async ({params}) => {
     //params is the params of url, storeId is the app router name [storeId]
-   
-    // const response = await fetch(`http://127.0.0.1:8080/api/store/${params.storeId}`,
-    // {
-    //     cache: "no-store"
-    // }
-    // )
-    // const store = await response.json()
+ 
+    
     const totalRevenue = await getTotalRevenue(params.storeId)
-    const salesCount = () => {}
-    const stockCount = () => {}
+    const salesCount = await getSalesCount(params.storeId)
+    const stockCount = await getStockCount(params.storeId)
+    const graphRevenue = await getGraphRevenue(params.storeId)
 
     return (
        
@@ -30,7 +30,7 @@ const DashboardPage: React.FC<DashboardProps> = async ({params}) => {
                 <Separator/>
                 <div className="grid gap-4 grid-cols-3">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-4">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
                                 Total Revenue
                                 </CardTitle>
@@ -40,13 +40,13 @@ const DashboardPage: React.FC<DashboardProps> = async ({params}) => {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    {formatter.format(100)}
+                                    {formatter.format(totalRevenue)}
                                 </div>
                             </CardContent>
                             
                         </Card>
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-4">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
                                 Sales
                                 </CardTitle>
@@ -56,13 +56,13 @@ const DashboardPage: React.FC<DashboardProps> = async ({params}) => {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    +25
+                                    +{salesCount}
                                 </div>
                             </CardContent>
                             
                         </Card>
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-4">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
                                 Products In Stock
                                 </CardTitle>
@@ -72,12 +72,20 @@ const DashboardPage: React.FC<DashboardProps> = async ({params}) => {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    12
+                                    {stockCount}
                                 </div>
                             </CardContent>
                             
                         </Card>
                 </div>
+                <Card className="col-span-4">
+                    <CardHeader>
+                        <CardTitle>Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        <Overview data={graphRevenue}/>
+                    </CardContent>
+                </Card>
             </div>
              </div>
     )

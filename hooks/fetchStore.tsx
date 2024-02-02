@@ -12,7 +12,7 @@ export async function fetchStore() {
     }
 
     const store = await fetch(`http://127.0.0.1:8080/api/user/${userId}/store`,{
-        cache: "no-store"
+        next : {revalidate : 120}
     })
     return store.json()
 }

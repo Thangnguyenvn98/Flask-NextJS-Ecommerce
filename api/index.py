@@ -816,8 +816,11 @@ class OrdersPaidResource(Resource):
     def get(self,store_id):
         if not store_id:
             return {'message': 'Store ID is required'}, 400
-        orders = Order.query.filter_by(is_paid=True,store_id=store_id)
-
+        print(store_id,file=sys.stderr)
+        orders = Order.query.filter_by(is_paid=True,store_id=store_id).all()
+        if orders:
+            return orders
+        return [],200
          
 
 if __name__ == '__main__':

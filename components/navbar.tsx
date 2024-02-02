@@ -16,7 +16,7 @@ const Navbar = async () => {
   let stores
   try {
     const response = await fetch(`http://127.0.0.1:8080/api/user/${userId}/stores`, {
-      cache: "no-store"
+      next : {revalidate : 300}
     })
 
     stores = await response.json()
